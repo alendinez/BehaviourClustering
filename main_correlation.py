@@ -33,7 +33,7 @@ def compute_max_corr_parallel(segments):
     output = []
     compute_max_corr_1segment_partial = partial(compute_max_corr_1segment, segments = segments)
     
-    pool = multiprocessing.Pool(processes = 4)
+    pool = multiprocessing.Pool(processes = 16)
     o = pool.map_async(compute_max_corr_1segment_partial, segments).get()
 
     output.append(o)
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         all_data.append(data)
         print("Data loaded: "+filename)
     
-    path="./"
+    path="../Data/output"
     all_segments = data_manager.load_all_segments(path, sigma, w)
     for data in all_data:
         for segment in all_segments:
