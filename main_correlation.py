@@ -95,7 +95,7 @@ if __name__ == "__main__":
         all_data.append(data)
         print("Data loaded: "+filename)
     
-    path="../Data/output"
+    path="../Data/output/"
     all_segments = data_manager.load_all_segments(path, sigma, w)
     for data in all_data:
         for segment in all_segments:
