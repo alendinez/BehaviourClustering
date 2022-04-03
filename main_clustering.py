@@ -89,7 +89,6 @@ if __name__ == "__main__":
     maxcorr_ax = np.load(path+"maxcorr_ax.npy")
     maxcorr_ay = np.load(path+"maxcorr_ay.npy")
     maxcorr_az = np.load(path+"maxcorr_az.npy") 
-    lag_ax = np.load(path+"lag_ax.npy")
     
     ### Call the group_segments function
     threshold_ax = 0.4
@@ -98,8 +97,16 @@ if __name__ == "__main__":
     input_segments = copy.copy(all_segments)
     groups_raw = group_segments(input_segments, maxcorr_ax, maxcorr_ay, maxcorr_az, threshold_ax, threshold_ay, threshold_az)
     
+    # Delete unnecesary variables to free memory
+    del maxcorr_ax
+    del maxcorr_ay
+    del maxcorr_az
+    del all_segments
+    del input_segments
+    del all_data
+
     print("Number of raw groups: "+str(len(groups_raw)))
-    path = ""
+    groups_raw = np.array(groups_raw, dtype="object")
     np.save(os.path.join(path, 'groups_raw.npy'), groups_raw)
     
     finish_time = time.time()

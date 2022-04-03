@@ -2,6 +2,7 @@ import copy
 import time
 import numpy as np
 import segment_manager
+import data_manager
 import tsaug
 import random
 from tsaug.visualization import plot
@@ -53,11 +54,10 @@ lag_ax = np.load(output_path + "lag_ax.npy")
 ### Save N most common behaviors
 N = 10
 groups = segment_manager.save_most_common_behaviors(groups_raw, N)
-print(N + " most common behaviours selected")
+print(N, "most common behaviours selected")
 
 ### Align segments from the same group
 groups = segment_manager.align_segments(groups, lag_ax)
-print("Segments aligned")
 
 ### Set up acceleration for the aligned segments
 ''' En teoria viene ya con el set
@@ -89,8 +89,8 @@ num_segments_train_pergroup = int(0.8*max_group_length)
 num_segments_test_pergroup = max_group_length - num_segments_train_pergroup
 num_segments_train = num_segments_train_pergroup*num_groups
 num_segments_test = num_segments_test_pergroup*num_groups  # Number of segments from each group that we will use to train the network.
-print("Number of train segments: " + num_segments_train)
-print("Number of test segments: " + num_segments_test)
+print("Number of train segments:", num_segments_train)
+print("Number of test segments:", num_segments_test)
 
 train_segments = []
 test_segments = []
@@ -181,8 +181,7 @@ disp.ax_.set_title("Confusion matrix")
 plt.show()
 
 #%% Check how many segments from each axis do we have
-path = ""
-all_segments = data_manager.load_all_segments(path, 6, 50)
+all_segments = data_manager.load_all_segments(output_path, sigma, w)
 
 num_x, num_y, num_z, num_xy, num_xz, num_yz, num_xyz = 0, 0, 0, 0, 0, 0, 0
 

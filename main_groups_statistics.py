@@ -2,6 +2,7 @@ import copy
 import time
 import numpy as np
 import segment_manager
+import data_manager
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 
@@ -79,7 +80,7 @@ filenames = ['7501394_rec16112018_PRincon_PHAAET_S1_',
         '8201720_rec31122020_ICima_PHAAET_ninho 71_21_S11_S1',
         '8201959_rec29122020_ICima_PHAAET_ninho 31_36_S1']
 
-''' Toda la data viene en groups_raw.npy en teoria
+
 all_data = []
 
 print("Starting...")
@@ -89,7 +90,7 @@ for filename in filenames:
     data.filter_accelerations(4, 0.4)
     all_data.append(data)
     print("Data loaded: "+filename)
-'''
+
 
 groups_raw = np.load(output_path + "groups_raw.npy", allow_pickle = True)
 lag_ax = np.load(output_path + "lag_ax.npy")
@@ -97,23 +98,26 @@ lag_ax = np.load(output_path + "lag_ax.npy")
 ### Check the number of groups with more than 100 elements
 plus100 = 0
 total_segments = 0
+segments_in_100 = 0
 for group in groups_raw:
     if len(group) >= 100:
         plus100 = plus100+1
-        total_segments = total_segments+len(group)
+        segments_in_100 = segments_in_100+len(group)
+    total_segments = total_segments+len(group)
         
-percentage = 100-(total_segments/20813)*100
-print("Number of groups with moer than 100 elements: "+str(plus100))
-print("Percentage of segments out of these groups: "+str(percentage))
+percentage_in_100 = (segments_in_100/total_segments)*100
+percentage_out_100 = 100 - (segments_in_100/total_segments)*100
+print("Number of groups with more than 100 elements: "+str(plus100))
+print("Percentage of segments in these groups: "+str(percentage_in_100))
+print("Percentage of segments out of these groups: "+str(percentage_out_100))
 
 ### Save N most common behaviors
 N = 10
 groups = segment_manager.save_most_common_behaviors(groups_raw, N)
-print(N + " most common behaviours selected")
+print(N, "most common behaviours selected")
 
 ### Align segments from the same group
 groups = segment_manager.align_segments(groups, lag_ax)
-print("Segments aligned")
 
 ### Set up acceleration for the aligned segments
 ''' En teoria viene ya con el set
