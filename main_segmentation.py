@@ -13,8 +13,8 @@ start_time = time.time()
 ### Initialize data_managerager class.
 
 ### Initialize with sigma, w and mode (rest or mean).
-sigma = 4
-w = 50
+sigma = 6
+w = 100
 mode = "mean"
 segment_manager = segment_manager.segment_manager(sigma, w, mode)
 data_manager = data_manager.data_manager()
@@ -63,10 +63,6 @@ for filename in filenames:
     current_segments = copy.deepcopy(init_segments)
     current_segments = segment_manager.overlap_segments(filename, current_segments, len(current_data.ax))
     print("Segments found after overlapping: "+str(len(current_segments)))
-
-    ### Add acceleration data to each segment.
-    for segment in current_segments:
-        segment.setup_acceleration(current_data)
 
     ### Append the segments found in the current dataset into a list that contains the segments from ALL datasets.
     all_segments = all_segments + current_segments

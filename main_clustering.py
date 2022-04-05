@@ -91,7 +91,7 @@ if __name__ == "__main__":
     maxcorr_az = np.load(path+"maxcorr_az.npy") 
     
     ### Call the group_segments function
-    threshold_ax = 0.4
+    threshold_ax = 0.375
     threshold_ay = 0
     threshold_az = 0.1
     input_segments = copy.copy(all_segments)

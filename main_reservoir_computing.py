@@ -49,15 +49,11 @@ for filename in filenames:
 '''
 
 groups_raw = np.load(output_path + "groups_raw.npy", allow_pickle = True)
-lag_ax = np.load(output_path + "lag_ax.npy")
 
 ### Save N most common behaviors
-N = 10
+N = 5
 groups = segment_manager.save_most_common_behaviors(groups_raw, N)
 print(N, "most common behaviours selected")
-
-### Align segments from the same group
-groups = segment_manager.align_segments(groups, lag_ax)
 
 ### Set up acceleration for the aligned segments
 ''' En teoria viene ya con el set
@@ -172,6 +168,10 @@ Network.test_network(test_data, num_segments_test, len_segments_test, num_nodes,
 if classifier == 'log':
     print(f'Performance using {classifier} : {Network.regressor.score(Network.mean_test_matrix.T,labels_test.T)}')
     prediction = Network.regressor.predict(Network.mean_test_matrix.T)
+
+finish_time = time.time()
+total_time = finish_time - start_time
+print("Computing time:",total_time, "seconds.")
 
 ### Plot confusion matrix
 print("Plotting confusion matrix...")
