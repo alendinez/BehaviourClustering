@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     path = "../Data/output/"
     ### Load previously created acceleration segments
-    all_segments = data_manager.load_all_segments(path, sigma, w)
+    all_segments = data_manager.load_all_segments_linux(path, sigma, w)
     for data in all_data:
         for segment in all_segments:
             if segment.filename == data.filename:

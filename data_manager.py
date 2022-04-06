@@ -171,6 +171,29 @@ class data_manager():
         
         print("Total number of segments loaded: "+str(len(all_segments))) 
         return all_segments
+
+    def load_all_segments_linux(self, path, sigma, w):
+        csv_filename = "allsegments_sigma"+str(sigma)+"_w"+str(w)+".csv" 
+        pathfile = path + csv_filename
+        
+        segments = []
+        with open(pathfile, "r") as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            if header != None:
+                i = 0
+                for row in reader:
+                    segments.append(row)
+                    i = i + 1
+                    
+        all_segments = []
+        for segment in segments:
+            current_segment = sgmnt.segment(int(float(segment[1])), int(float(segment[2])), segment[3], segment[4])
+            current_segment.id = int(segment[0])
+            all_segments.append(current_segment)
+        
+        print("Total number of segments loaded: "+str(len(all_segments))) 
+        return all_segments
     
     def load_corr_data(self, path, sigma, w, number_of_segments):
         import csv

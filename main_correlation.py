@@ -96,7 +96,7 @@ if __name__ == "__main__":
         print("Data loaded: "+filename)
     
     path="../Data/output/"
-    all_segments = data_manager.load_all_segments(path, sigma, w)
+    all_segments = data_manager.load_all_segments_linux(path, sigma, w)
     for data in all_data:
         for segment in all_segments:
             if segment.filename == data.filename:
@@ -106,14 +106,11 @@ if __name__ == "__main__":
     print("Segments loaded.")
     
     ### Prepare segments to compute max correlation
-    i = 0
     segments_ax, segments_ay, segments_az = [], [], []
     for segment in all_segments:
-        segment.id = i
         segments_ax.append(np.array(segment.ax))
         segments_ay.append(np.array(segment.ay))
         segments_az.append(np.array(segment.az))
-        i = i + 1 
     
     # Delete unnecesary variables to free memory
     del all_data
@@ -126,35 +123,23 @@ if __name__ == "__main__":
     ### to compute different rows of the max correlation matrix (faster than method 1).
     print("Starting the computation of max correlation...")
     output_ax = compute_max_corr_parallel(segments_ax)
-    np.save(os.path.join(path, 'output_ax.npy'), output_ax)
+    np.save(os.path.join(path, 'maxcorr_ax.npy'), np.array(output_ax[:][0][:])[:,0,:])
+    np.save(os.path.join(path, 'lag_ax.npy'), np.array(output_ax[:][0][:])[:,1,:])
     print("Axis x max correlation matrix computed")
     del output_ax
     del segments_ax
     
     output_ay = compute_max_corr_parallel(segments_ay)
-    np.save(os.path.join(path, 'output_ay.npy'), output_ay)
+    np.save(os.path.join(path, 'maxcorr_ay.npy'), np.array(output_ay[:][0][:])[:,0,:])
     print("Axis y max correlation matrix computed")
     del output_ay
     del segments_ay
     
     output_az = compute_max_corr_parallel(segments_az)
-    np.save(os.path.join(path, 'output_az.npy'), output_az)
+    np.save(os.path.join(path, 'maxcorr_az.npy'), np.array(output_az[:][0][:])[:,0,:])
     print("Axis z max correlation matrix computed")
     del output_az
     del segments_az
-    
-    ### Divide the output into max correlation and lag
-    #a = np.array(output_ax[:][0][:])[:,0,:]
-    #np.save(os.path.join(path, 'maxcorr_ax.npy'), a)
-    
-    #a = np.array(output_ay[:][0][:])[:,0,:]
-    #np.save(os.path.join(path, 'maxcorr_ay.npy'), a)
-    
-    #a = np.array(output_az[:][0][:])[:,0,:]
-    #np.save(os.path.join(path, 'maxcorr_az.npy'), a)
-    
-    #a = np.array(output_ax[:][0][:])[:,1,:]
-    #np.save(os.path.join(path, 'lag_ax.npy'), a)
 
     finish_time = time.time()
     total_time = finish_time - start_time

@@ -181,7 +181,7 @@ disp.ax_.set_title("Confusion matrix")
 plt.show()
 
 #%% Check how many segments from each axis do we have
-all_segments = data_manager.load_all_segments(output_path, sigma, w)
+all_segments = data_manager.load_all_segments_linux(output_path, sigma, w)
 
 num_x, num_y, num_z, num_xy, num_xz, num_yz, num_xyz = 0, 0, 0, 0, 0, 0, 0
 
