@@ -63,8 +63,8 @@ if __name__ == "__main__":
     start_time = time.time()
 
     ### Initialize data_manager and segment_manager    
-    sigma = 4
-    w = 50
+    sigma = 6
+    w = 100
     mode = "mean"
     #segment_manager = segment_manager.segment_manager(sigma, w, mode)
     data_manager = data_manager.data_manager()
@@ -128,25 +128,33 @@ if __name__ == "__main__":
     output_ax = compute_max_corr_parallel(segments_ax)
     np.save(os.path.join(path, 'output_ax.npy'), output_ax)
     print("Axis x max correlation matrix computed")
+    del output_ax
+    del segments_ax
+    
     output_ay = compute_max_corr_parallel(segments_ay)
     np.save(os.path.join(path, 'output_ay.npy'), output_ay)
     print("Axis y max correlation matrix computed")
+    del output_ay
+    del segments_ay
+    
     output_az = compute_max_corr_parallel(segments_az)
     np.save(os.path.join(path, 'output_az.npy'), output_az)
     print("Axis z max correlation matrix computed")
+    del output_az
+    del segments_az
     
     ### Divide the output into max correlation and lag
-    a = np.array(output_ax[:][0][:])[:,0,:]
-    np.save(os.path.join(path, 'maxcorr_ax.npy'), a)
+    #a = np.array(output_ax[:][0][:])[:,0,:]
+    #np.save(os.path.join(path, 'maxcorr_ax.npy'), a)
     
-    a = np.array(output_ay[:][0][:])[:,0,:]
-    np.save(os.path.join(path, 'maxcorr_ay.npy'), a)
+    #a = np.array(output_ay[:][0][:])[:,0,:]
+    #np.save(os.path.join(path, 'maxcorr_ay.npy'), a)
     
-    a = np.array(output_az[:][0][:])[:,0,:]
-    np.save(os.path.join(path, 'maxcorr_az.npy'), a)
+    #a = np.array(output_az[:][0][:])[:,0,:]
+    #np.save(os.path.join(path, 'maxcorr_az.npy'), a)
     
-    a = np.array(output_ax[:][0][:])[:,1,:]
-    np.save(os.path.join(path, 'lag_ax.npy'), a)
+    #a = np.array(output_ax[:][0][:])[:,1,:]
+    #np.save(os.path.join(path, 'lag_ax.npy'), a)
 
     finish_time = time.time()
     total_time = finish_time - start_time

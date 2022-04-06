@@ -61,7 +61,7 @@ for filename in filenames:
 
     ### Find overlapping segments
     current_segments = copy.deepcopy(init_segments)
-    current_segments = segment_manager.overlap_segments(filename, current_segments, len(current_data.ax))
+    current_segments = segment_manager.overlap_segments_one_direction(filename, current_segments, len(current_data.ax))
     print("Segments found after overlapping: "+str(len(current_segments)))
 
     ### Append the segments found in the current dataset into a list that contains the segments from ALL datasets.
@@ -74,7 +74,7 @@ for segment in all_segments:
     i = i+1
 
 ### Export all segments to CSV
-export_path = ""
+export_path = "../Data/output"
 
 data_manager.export_all_segments(all_segments, sigma, w, export_path)
 print("All segments successfully exported to .csv.")
@@ -86,7 +86,7 @@ total_time = finish_time - start_time
 print("Computing time:",total_time, "seconds.")
 
 
-
+'''
 #Find some metrics for the detected segments.
 length_segments_1axis = []
 length_segments_2axis = []
@@ -115,3 +115,4 @@ print("Number of 3-axis segments: "+str(len(length_segments_3axis)))
 print("Max 3-axis segment length: "+str(max(length_segments_3axis)))
 print("Min 3-axis segment length: "+str(min(length_segments_3axis)))
 print("Mean 3-axis segment length: "+str(np.mean(length_segments_3axis)))
+'''

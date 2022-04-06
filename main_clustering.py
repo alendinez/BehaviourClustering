@@ -41,12 +41,53 @@ def group_segments(input_segments, corr_ax, corr_ay, corr_az, threshold_ax, thre
             
     return similar_segments 
 
+def group_segments_max_first(input_segments, corr_ax, corr_ay, corr_az, threshold_ax, threshold_ay, threshold_az):
+    segments = copy.copy(input_segments)
+
+    ### Set diagonals of correlation matrices to 0
+    np.fill_diagonal(corr_ax, 0.0)
+    np.fill_diagonal(corr_ay, 0.0)
+    np.fill_diagonal(corr_az, 0.0)
+
+    ### Stack the correlation matrices
+    corr = np.dstack((corr_ax, corr_ay, corr_az))
+    
+    similar_segments = []    
+    while 0 < len(segments):
+        ### Get index of the segment with more correlation
+        index = np.unravel_index(corr.argmax(), corr.shape)[0]
+
+        current_segment = segments[index]
+        temp_similar_segments = [current_segment]
+        segments.remove(segments[index])
+        
+        j = 0
+        while j < len(segments):
+            next_segment = segments[j]
+            c_ax = corr_ax[current_segment.id, next_segment.id]
+            c_ay = corr_ay[current_segment.id, next_segment.id]
+            c_az = corr_az[current_segment.id, next_segment.id]
+            
+            if float(c_ax) >= threshold_ax and float(c_ay) >= threshold_ay and float(c_az) >= threshold_az:
+                temp_similar_segments.append(next_segment)
+                segments.remove(segments[j])
+                ### Set to 0 in the correlation matrix the segments already grouped
+                corr[j] = 0.0
+                corr[:,j] = 0.0
+            else:
+                j = j+1
+                    
+        else:
+            similar_segments.append(temp_similar_segments)
+            
+    return similar_segments 
+
 if __name__ == "__main__":
     start_time = time.time()
 
     ### Initialize data_manager and segment_manager    
-    sigma = 4
-    w = 50
+    sigma = 6
+    w = 100
     mode = "mean"
     segment_manager = segment_manager.segment_manager(sigma, w, mode)
     data_manager = data_manager.data_manager()
@@ -86,16 +127,16 @@ if __name__ == "__main__":
     print("Segments loaded.")
     
     ### Load correlation data
-    maxcorr_ax = np.load(path+"maxcorr_ax.npy")
-    maxcorr_ay = np.load(path+"maxcorr_ay.npy")
-    maxcorr_az = np.load(path+"maxcorr_az.npy") 
+    maxcorr_ax = np.load(path + "maxcorr_ax.npy")
+    maxcorr_ay = np.load(path + "maxcorr_ay.npy")
+    maxcorr_az = np.load(path + "maxcorr_az.npy") 
     
     ### Call the group_segments function
-    threshold_ax = 0.375
-    threshold_ay = 0
-    threshold_az = 0.1
+    threshold_ax = 0.3
+    threshold_ay = 0.3
+    threshold_az = 0.3
     input_segments = copy.copy(all_segments)
-    groups_raw = group_segments(input_segments, maxcorr_ax, maxcorr_ay, maxcorr_az, threshold_ax, threshold_ay, threshold_az)
+    groups_raw = group_segments_max_first(input_segments, maxcorr_ax, maxcorr_ay, maxcorr_az, threshold_ax, threshold_ay, threshold_az)
     
     # Delete unnecesary variables to free memory
     del maxcorr_ax
