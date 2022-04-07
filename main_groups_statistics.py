@@ -5,6 +5,7 @@ import segment_manager
 import data_manager
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
+import warnings
 warnings.filterwarnings("ignore")
 
 def get_cmap(n, name='YlOrRd'):
@@ -58,8 +59,8 @@ def get_continuous_cmap(hex_list, float_list=None,):
 start_time = time.time()
 
 ### Initialize data_manager and segment_manager    
-sigma = 4
-w = 50
+sigma = 6
+w = 100
 mode = "mean"
 segment_manager = segment_manager.segment_manager(sigma, w, mode)
 data_manager = data_manager.data_manager()
@@ -184,7 +185,7 @@ for i in range(len(groups)):
         j += 1
     
     fig.suptitle(f'All segments and avrg segment from group {i}, group size: {str(len(groups[i]))}', y = 0.9)
-    plt.show()
+    plt.savefig(f'group{i}.png')
     
 finish_time = time.time()
 total_time = finish_time - start_time

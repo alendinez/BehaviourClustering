@@ -9,13 +9,14 @@ from tsaug.visualization import plot
 from matplotlib import pyplot as plt
 import network as Network
 from sklearn.metrics import plot_confusion_matrix
+import warnings
 warnings.filterwarnings("ignore")
 
 start_time = time.time()
 
 ### Initialize data_manager and segment_manager    
-sigma = 4
-w = 50
+sigma = 6
+w = 100
 mode = "mean"
 segment_manager = segment_manager.segment_manager(sigma, w, mode)
 data_manager = data_manager.data_manager()
@@ -148,10 +149,10 @@ print("Data is ready for training")
 
 ### Train and test Reservoir Computer Network
 Network = Network.Network()
-num_nodes = 100
+num_nodes = 200
 
-input_probability = 0.3
-reservoir_probability = 0.3
+input_probability = 0.5
+reservoir_probability = 0.5
 classifier = "log"
 
 Network.T = sum(len_segments_train)  

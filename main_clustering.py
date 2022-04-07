@@ -6,6 +6,7 @@ import numpy as np
 import data_manager
 import segment_manager
 import multiprocessing
+import warnings
 warnings.filterwarnings("ignore")
 
 def group_segments(input_segments, corr_ax, corr_ay, corr_az, threshold_ax, threshold_ay, threshold_az):
@@ -54,27 +55,41 @@ def group_segments_max_first(input_segments, corr_ax, corr_ay, corr_az, threshol
     corr = np.dstack((corr_ax, corr_ay, corr_az))
     
     similar_segments = []    
-    while segments.count(None) >= len(segments):
+    max_corr_val = 1
+    ### len(segments) - 1 because the last segment is completely erased before it's turn
+    while segments.count(None) < len(segments) - 1 and max_corr_val >= max(threshold_ax, threshold_ay, threshold_az):
+        print(len(segments) - segments.count(None), 'segments left to be grouped...')
         ### Get index of the segment with more correlation
-        index = np.unravel_index(corr.argmax(), corr.shape)[0]
+        index_1, index_2, index_3 = np.unravel_index(corr.argmax(), corr.shape)
+        max_corr_val = corr[index_1, index_2, index_3]
 
-        current_segment = segments[index]
-        temp_similar_segments = [current_segment]
-        segments[index] = None
+        temp_similar_segments = [segments[index_1], segments[index_2]]
+        segments[index_1], segments[index_2] = None, None
 
-        c_ax = np.where(corr[index,:,0] >= threshold_ax)
-        c_ay = np.where(corr[index,:,1] >= threshold_ay)
-        c_az = np.where(corr[index,:,2] >= threshold_az)
+        ### Get the indices of the segments above the threshold in the 3 axis
+        c_ax_1 = np.where(corr[index_1,:,0] >= threshold_ax)
+        c_ay_1 = np.where(corr[index_1,:,1] >= threshold_ay)
+        c_az_1 = np.where(corr[index_1,:,2] >= threshold_az)
 
-        corr_indices = np.intersect1d(c_ax, c_ay, c_az)
-        
+        c_ax_2 = np.where(corr[index_2,:,0] >= threshold_ax)
+        c_ay_2 = np.where(corr[index_2,:,1] >= threshold_ay)
+        c_az_2 = np.where(corr[index_2,:,2] >= threshold_az)
+
+        corr_indices_1 = np.intersect1d(c_ax_1, c_ay_1, c_az_1)
+        corr_indices_2 = np.intersect1d(c_ax_2, c_ay_2, c_az_2)
+        corr_indices = np.intersect1d(corr_indices_1, corr_indices_2)
+
+        ### Set to 0 in the correlation matrix the current segment
+        corr[index_1], corr[:,index_1], corr[index_2], corr[:,index_2] = 0.0, 0.0, 0.0, 0.0
+
+        ### Add the segments to the group
         for i in corr_indices:
             temp_similar_segments.append(segments[i])
             segments[i] = None
             ### Set to 0 in the correlation matrix the segments already grouped
             corr[i] = 0.0
             corr[:,i] = 0.0
-        
+
         ### Append group
         similar_segments.append(temp_similar_segments)
             
@@ -122,7 +137,6 @@ if __name__ == "__main__":
         for segment in all_segments:
             if segment.filename == data.filename:
                 segment.setup_acceleration(data)
-    print("Segments loaded.")
     
     ### Load correlation data
     maxcorr_ax = np.load(path + "maxcorr_ax.npy")

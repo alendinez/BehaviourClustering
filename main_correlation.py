@@ -6,6 +6,7 @@ import segment_manager
 import multiprocessing
 from scipy import signal
 from functools import partial
+import warnings
 warnings.filterwarnings("ignore")
 
 '''
