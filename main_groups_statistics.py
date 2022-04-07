@@ -5,6 +5,7 @@ import segment_manager
 import data_manager
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
+warnings.filterwarnings("ignore")
 
 def get_cmap(n, name='YlOrRd'):
     '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 

@@ -6,6 +6,7 @@ import numpy as np
 import data_manager
 import segment_manager
 import multiprocessing
+warnings.filterwarnings("ignore")
 
 def group_segments(input_segments, corr_ax, corr_ay, corr_az, threshold_ax, threshold_ay, threshold_az):
 ### Add a global index to each segment from 0 to len(segments)
@@ -53,32 +54,29 @@ def group_segments_max_first(input_segments, corr_ax, corr_ay, corr_az, threshol
     corr = np.dstack((corr_ax, corr_ay, corr_az))
     
     similar_segments = []    
-    while 0 < len(segments):
+    while segments.count(None) >= len(segments):
         ### Get index of the segment with more correlation
         index = np.unravel_index(corr.argmax(), corr.shape)[0]
 
         current_segment = segments[index]
         temp_similar_segments = [current_segment]
-        segments.remove(segments[index])
+        segments[index] = None
+
+        c_ax = np.where(corr[index,:,0] >= threshold_ax)
+        c_ay = np.where(corr[index,:,1] >= threshold_ay)
+        c_az = np.where(corr[index,:,2] >= threshold_az)
+
+        corr_indices = np.intersect1d(c_ax, c_ay, c_az)
         
-        j = 0
-        while j < len(segments):
-            next_segment = segments[j]
-            c_ax = corr_ax[current_segment.id, next_segment.id]
-            c_ay = corr_ay[current_segment.id, next_segment.id]
-            c_az = corr_az[current_segment.id, next_segment.id]
-            
-            if float(c_ax) >= threshold_ax and float(c_ay) >= threshold_ay and float(c_az) >= threshold_az:
-                temp_similar_segments.append(next_segment)
-                segments.remove(segments[j])
-                ### Set to 0 in the correlation matrix the segments already grouped
-                corr[j] = 0.0
-                corr[:,j] = 0.0
-            else:
-                j = j+1
-                    
-        else:
-            similar_segments.append(temp_similar_segments)
+        for i in corr_indices:
+            temp_similar_segments.append(segments[i])
+            segments[i] = None
+            ### Set to 0 in the correlation matrix the segments already grouped
+            corr[i] = 0.0
+            corr[:,i] = 0.0
+        
+        ### Append group
+        similar_segments.append(temp_similar_segments)
             
     return similar_segments 
 

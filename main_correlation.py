@@ -6,6 +6,7 @@ import segment_manager
 import multiprocessing
 from scipy import signal
 from functools import partial
+warnings.filterwarnings("ignore")
 
 '''
 Note: scipy.signal.correlation_lags method needs Scipy 1.6.3 to work.

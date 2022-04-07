@@ -9,6 +9,7 @@ from tsaug.visualization import plot
 from matplotlib import pyplot as plt
 import network as Network
 from sklearn.metrics import plot_confusion_matrix
+warnings.filterwarnings("ignore")
 
 start_time = time.time()
 
