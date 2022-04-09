@@ -1,11 +1,13 @@
 import os
 import time
 import numpy as np
-import data_manager
-import segment_manager
 import multiprocessing
 from scipy import signal
 from functools import partial
+
+import models.data_manager
+import models.segment_manager
+
 import warnings
 warnings.filterwarnings("ignore")
 

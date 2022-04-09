@@ -1,10 +1,15 @@
+import sys
+sys.path.insert(0,"..") ## Set path to main directory
+
 import copy
 import time
 import numpy as np
-import segment_manager
-import data_manager
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
+
+import models.segment_manager
+import models.data_manager
+
 import warnings
 warnings.filterwarnings("ignore")
 

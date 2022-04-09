@@ -1,14 +1,17 @@
 import copy
 import time
 import numpy as np
-import segment_manager
-import data_manager
 import tsaug
 import random
+
 from tsaug.visualization import plot
 from matplotlib import pyplot as plt
-import network as Network
 from sklearn.metrics import plot_confusion_matrix
+
+import models.data_manager
+import models.segment_manager
+import models.network as Network
+
 import warnings
 warnings.filterwarnings("ignore")
 

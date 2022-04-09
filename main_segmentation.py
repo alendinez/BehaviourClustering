@@ -1,11 +1,12 @@
-# Imports
 import time
 import copy
-import warnings
 import numpy as np
-import data_manager
-import segment_manager
 from matplotlib import pyplot as plt
+
+import models.data_manager
+import models.segment_manager
+
+import warnings
 warnings.filterwarnings("ignore")
 
 start_time = time.time()

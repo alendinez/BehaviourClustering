@@ -3,9 +3,11 @@ import copy
 import time
 import random
 import numpy as np
-import data_manager
-import segment_manager
 import multiprocessing
+
+import models.data_manager
+import models.segment_manager
+
 import warnings
 warnings.filterwarnings("ignore")
 
