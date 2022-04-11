@@ -1,18 +1,22 @@
+import sys
+sys.path.insert(0,"..") ## Set path to main directory
+
+import os
 import time
 import copy
 import numpy as np
 
-import models.data_manager
+import models.data_manager as data_manager
 
 import warnings
 warnings.filterwarnings("ignore")
 
 start_time = time.time()
 
-data_manager = data_manager.data_manager()
+data_manager = data_manager()
 
-data_path = "../Data/CSV/"
-output_path = "../Data/output/"
+data_path = "../../Data/CSV/"
+output_path = "../../Data/output/"
 
 ### Load acceleration data
 filenames = ['7501394_rec16112018_PRincon_PHAAET_S1_',

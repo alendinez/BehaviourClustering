@@ -1,4 +1,3 @@
-
 class segment():
     def __init__(self, start, end, axis, filename): 
         

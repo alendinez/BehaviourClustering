@@ -1,8 +1,9 @@
 import copy
 import numpy as np
-import segment as sgmnt
 from scipy import signal
 import more_itertools as mit
+
+import models.segment as sgmnt
 
 class segment_manager():
     def __init__(self, sigma, w, mode = "main"):
@@ -42,7 +43,7 @@ class segment_manager():
 
         segments = []
         for segment in raw_segments:
-            segments.append(sgmnt.segment(segment[0], segment[len(segment)-1], axis, filename))
+            segments.append(sgmnt(segment[0], segment[len(segment)-1], axis, filename))
             
         return segments
     
@@ -215,7 +216,7 @@ class segment_manager():
         start = min([current_segment.start, overlapping_segment.start])
         end = max([current_segment.end, overlapping_segment.end])
         axis = ''.join(sorted(set(current_segment.axis + overlapping_segment.axis)))
-        new_segment = sgmnt.segment(start, end, axis, filename)
+        new_segment = sgmnt(start, end, axis, filename)
         
         return new_segment
     

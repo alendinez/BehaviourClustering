@@ -69,8 +69,6 @@ if __name__ == "__main__":
     ### Initialize data_manager and segment_manager    
     sigma = 6
     w = 100
-    mode = "mean"
-    #segment_manager = segment_manager.segment_manager(sigma, w, mode)
     data_manager = data_manager.data_manager()
     
     path = "../Data/output/"

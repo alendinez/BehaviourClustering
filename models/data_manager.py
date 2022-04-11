@@ -1,10 +1,11 @@
 import csv
 import datetime
-import data as dt
 import numpy as np
 import pandas as pd
-import segment as sgmnt
 from scipy import signal
+
+import models.segment as sgmnt
+import models.data as dt
 
 
 class data_manager():
@@ -20,7 +21,7 @@ class data_manager():
             data_pd = pd.read_csv(path + filename + '.csv', header=0)
             accelerations = data_pd.loc[:, ['X', 'Y', 'Z']].values
             
-        data = dt.data(filename, accelerations[:,0], accelerations[:,1], accelerations[:,2])
+        data = dt(filename, accelerations[:,0], accelerations[:,1], accelerations[:,2])
         data.pressure = np.array(data_pd.loc[:, ['Pressure']].values)
         return data
     
@@ -33,7 +34,7 @@ class data_manager():
             data_pd = pd.read_csv(path + filename + '.csv', header=0)
             accelerations = data_pd.loc[:, ['X', 'Y', 'Z']].values
             
-        data = dt.data(filename, accelerations[:,0], accelerations[:,1], accelerations[:,2])
+        data = dt(filename, accelerations[:,0], accelerations[:,1], accelerations[:,2])
         
         data.pressure = np.array(data_pd.loc[:, ['Pressure']].values)
         
@@ -70,7 +71,7 @@ class data_manager():
             data_pd = pd.read_csv(path + filename + '.csv', header=0)
             accelerations = data_pd.loc[:, ['X', 'Y', 'Z']].values
             
-        data = dt.data(filename, accelerations[:,0], accelerations[:,1], accelerations[:,2])
+        data = dt(filename, accelerations[:,0], accelerations[:,1], accelerations[:,2])
         
         data.pressure = np.array(data_pd.loc[:, ['Pressure']].values)
         
@@ -106,7 +107,7 @@ class data_manager():
             data_pd = pd.read_csv(path + filename + '.csv', header=0)
             accelerations = data_pd.loc[:, ['X', 'Y', 'Z']].values
             
-        data = dt.data(filename, accelerations[:,0], accelerations[:,1], accelerations[:,2])
+        data = dt(filename, accelerations[:,0], accelerations[:,1], accelerations[:,2])
         
         data.pressure = np.array(data_pd.loc[:, ['Pressure']].values)
         
@@ -165,7 +166,7 @@ class data_manager():
                     
         all_segments = []
         for segment in segments:
-            current_segment = sgmnt.segment(int(float(segment[1])), int(float(segment[2])), segment[3], segment[4])
+            current_segment = sgmnt(int(float(segment[1])), int(float(segment[2])), segment[3], segment[4])
             current_segment.id = int(segment[0])
             all_segments.append(current_segment)
         
@@ -188,7 +189,7 @@ class data_manager():
                     
         all_segments = []
         for segment in segments:
-            current_segment = sgmnt.segment(int(float(segment[1])), int(float(segment[2])), segment[3], segment[4])
+            current_segment = sgmnt(int(float(segment[1])), int(float(segment[2])), segment[3], segment[4])
             current_segment.id = int(segment[0])
             all_segments.append(current_segment)
         
