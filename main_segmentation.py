@@ -14,47 +14,28 @@ start_time = time.time()
 ### Initialize data_managerager class.
 
 ### Initialize with sigma, w and mode (rest or mean).
-sigma = 6
+sigma = 1
 w = 100
-mode = "mean"
+mode = "fixed"
 segment_manager = segment_manager.segment_manager(sigma, w, mode)
 data_manager = data_manager.data_manager()
 
 ### Initialize a list to store the events from all the datasets.
-all_data = []
 all_segments = []
 
-### Define the names of the datasets that we will use
-filenames = ['7501394_rec16112018_PRincon_PHAAET_S1_',
-            '7501709_rec18112018_PRincon_PHAAET_S1_',
-            '7501755_rec27112018_PRincon_PHAAET_AXY_S1', 
-            '8200163_rec14052019_PRoque_PHAAET_S1',
-            '8200445_rec29042019_PRincon_PHAAET_S1',
-            '8200473_rec24052019_PRincon_PHAAET_S1',
-            '8200487_rec04052019_PRincon_PHAAET_S1',
-            '8200718_PHAAET_rec08032019_PRincon',
-            '8201653_PHAAET_rec21012021_ICima_Ninho39_36_S1',
-            '8201667_PHAAET_rec21012021_ICima_Ninho68_21_S1',
-            '8201720_rec31122020_ICima_PHAAET_ninho 71_21_S11_S1',
-            '8201959_rec29122020_ICima_PHAAET_ninho 31_36_S1']
+output_path = "../Data/output/"
+all_data = np.load(output_path + "all_data.npy", allow_pickle = True)
+print("Data loaded")
 
 print("Starting...")
 ### Detect events for a given datasets
-for filename in filenames:
-    
-    path = "../Data/CSV/"
-    
-    # Load data and filter acceleration signals with a butterworth filter
-    initial_data = data_manager.load_data(filename, path)
-    current_data = copy.deepcopy(initial_data)
-    current_data.filter_accelerations(4, 0.4)
-    all_data.append(current_data)
-    print("Data loaded: "+filename)
+for data in all_data:
+    print("Processing file:", data.filename)
 
     ### Find raw events for ax, ay and az.
-    segments_ax = segment_manager.create_raw_segments(filename, current_data.ax, "x", "mean")
-    segments_ay = segment_manager.create_raw_segments(filename, current_data.ay, "y", "mean")
-    segments_az = segment_manager.create_raw_segments(filename, current_data.az, "z", "mean")
+    segments_ax = segment_manager.create_raw_segments(data.filename, data.ax, "x")
+    segments_ay = segment_manager.create_raw_segments(data.filename, data.ay, "y")
+    segments_az = segment_manager.create_raw_segments(data.filename, data.az, "z")
     
     ### Save initial segments into a different list to check that none of them are lost after overlapping.
     init_segments = segments_ax + segments_ay + segments_az
@@ -62,7 +43,7 @@ for filename in filenames:
 
     ### Find overlapping segments
     current_segments = copy.deepcopy(init_segments)
-    current_segments = segment_manager.overlap_segments_one_direction(filename, current_segments, len(current_data.ax))
+    current_segments = segment_manager.overlap_segments_one_direction(data.filename, current_segments, len(data.ax))
     print("Segments found after overlapping: "+str(len(current_segments)))
 
     ### Append the segments found in the current dataset into a list that contains the segments from ALL datasets.
@@ -75,13 +56,10 @@ for segment in all_segments:
     i = i+1
 
 ### Export all segments to CSV
-export_path = "../Data/output"
-
-data_manager.export_all_segments(all_segments, sigma, w, export_path)
-print("All segments successfully exported to .csv.")
-print("")
-   
+data_manager.export_all_segments(all_segments, sigma, w, output_path)
+print("All segments successfully exported to .csv")
 print("Total number of segments: "+str(len(all_segments)))
+
 finish_time = time.time()
 total_time = finish_time - start_time
 print("Computing time:",total_time, "seconds.")

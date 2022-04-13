@@ -29,7 +29,7 @@ class segment_manager():
     and axis is the axis where the segment was initially created,
     
     '''    
-    def create_raw_segments(self, filename, a, axis, mode):
+    def create_raw_segments(self, filename, a, axis):
         stdev = np.std(a)
     
         if self.mode == "mean":
@@ -37,6 +37,8 @@ class segment_manager():
             index_segments = np.where((a >= mean + self.sigma*stdev) | (a <= mean - self.sigma*stdev))
         if self.mode == "rest":
             index_segments = np.where((a >= self.sigma*stdev) | (a <= -self.sigma*stdev))
+        if self.mode == "fixed":
+            index_segments = np.where((a >= self.sigma) | (a <= -self.sigma))
         
         index_segments = np.array(index_segments)[0]
         raw_segments = np.array([tuple(group) for group in mit.consecutive_groups(sorted(index_segments))])
