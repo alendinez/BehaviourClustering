@@ -7,8 +7,9 @@ import numpy as np
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 
-import models.segment_manager
-import models.data_manager
+import models.segment_manager as segment_manager
+import models.data_manager as data_manager
+import models.segment as segment
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -67,37 +68,12 @@ start_time = time.time()
 sigma = 6
 w = 100
 mode = "mean"
-segment_manager = segment_manager.segment_manager(sigma, w, mode)
-data_manager = data_manager.data_manager()
+segment_manager = segment_manager(sigma, w, mode)
+data_manager = data_manager()
 
-data_path = "../Data/CSV/"
-output_path = "../Data/output/"
-
-### Load acceleration data
-filenames = ['7501394_rec16112018_PRincon_PHAAET_S1_',
-        '7501709_rec18112018_PRincon_PHAAET_S1_',
-        '7501755_rec27112018_PRincon_PHAAET_AXY_S1', 
-        '8200163_rec14052019_PRoque_PHAAET_S1',
-        '8200445_rec29042019_PRincon_PHAAET_S1',
-        '8200473_rec24052019_PRincon_PHAAET_S1',
-        '8200487_rec04052019_PRincon_PHAAET_S1',
-        '8200718_PHAAET_rec08032019_PRincon',
-        '8201653_PHAAET_rec21012021_ICima_Ninho39_36_S1',
-        '8201667_PHAAET_rec21012021_ICima_Ninho68_21_S1',
-        '8201720_rec31122020_ICima_PHAAET_ninho 71_21_S11_S1',
-        '8201959_rec29122020_ICima_PHAAET_ninho 31_36_S1']
-
-
-all_data = []
-
-print("Starting...")
-for filename in filenames:
-    # Load data and filter acceleration signals with a butterworth filter
-    data = data_manager.load_data(filename, data_path)
-    data.filter_accelerations(4, 0.4)
-    all_data.append(data)
-    print("Data loaded: "+filename)
-
+output_path = "../../Data/output/"
+all_data = np.load(output_path + "all_data.npy", allow_pickle = True)
+print("Data loaded")
 
 groups_raw = np.load(output_path + "groups_raw.npy", allow_pickle = True)
 lag_ax = np.load(output_path + "lag_ax.npy")
@@ -125,18 +101,6 @@ print(N, "most common behaviours selected")
 
 ### Align segments from the same group
 groups = segment_manager.align_segments(groups, lag_ax)
-
-### Set up acceleration for the aligned segments
-''' En teoria viene ya con el set
-for data in all_data:
-    for group in groups:
-        for segment in group:
-            if segment.filename == data.filename:
-                segment.setup_acceleration(data)
-'''
-
-### Find some group metrics
-segment_manager.find_group_metrics(groups, all_data)
 
 ### Find average behavior for each group in the three axis and plot it
 avrg_group_ax, avrg_group_ay, avrg_group_az, avrg_group_pressure = segment_manager.find_average_behavior(groups, mode="nanmean")
@@ -190,7 +154,7 @@ for i in range(len(groups)):
         j += 1
     
     fig.suptitle(f'All segments and avrg segment from group {i}, group size: {str(len(groups[i]))}', y = 0.9)
-    plt.savefig(f'group{i}.png')
+    plt.savefig(output_path + f'group{i}.png')
     
 finish_time = time.time()
 total_time = finish_time - start_time

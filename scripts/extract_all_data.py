@@ -44,4 +44,4 @@ for filename in filenames:
     print("Data loaded: " + filename)
 
 ### Extract the data
-np.save(os.path.join(path, 'all_data.npy'), all_data)
+np.save(os.path.join(output_path, 'all_data.npy'), all_data)

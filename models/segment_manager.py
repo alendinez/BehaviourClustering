@@ -615,6 +615,41 @@ class segment_manager():
                 avrg_group_pressure.append(np.nanmean(group_pressure, axis = 0))
             
         return avrg_group_ax, avrg_group_ay, avrg_group_az, avrg_group_pressure
+
+    def find_median_behavior(self, groups):
+        avrg_group_ax, avrg_group_ay, avrg_group_az = [], [], []
+                            
+        temp_groups = copy.copy(groups)
+        temp_groups_2 = []
+        for group in temp_groups:
+            temp_group = []
+            group.sort(key=lambda segment: len(segment.ax))
+            len_grp = len(group)
+            for i in range(int(0.8*len_grp)):
+                temp_group.append(group[i])
+            temp_groups_2.append(temp_group)
+                
+        for group in temp_groups_2:
+            group_ax, group_ay, group_az = [], [], []
+            
+            for segment in group:
+                group_ax.append(segment.ax)
+                group_ay.append(segment.ay)
+                group_az.append(segment.az)
+                
+                max_len_ax = np.array([len(array) for array in group_ax]).max()
+                max_len_ay = np.array([len(array) for array in group_ay]).max()
+                max_len_az = np.array([len(array) for array in group_az]).max()
+            
+            group_ax = np.array([np.pad(array, (0, max_len_ax - len(array)), mode='constant', constant_values=np.nan) for array in group_ax])
+            group_ay = np.array([np.pad(array, (0, max_len_ay - len(array)), mode='constant', constant_values=np.nan) for array in group_ay])
+            group_az = np.array([np.pad(array, (0, max_len_az - len(array)), mode='constant', constant_values=np.nan) for array in group_az])
+            
+            avrg_group_ax.append(np.nanmedian(group_ax, axis = 0))
+            avrg_group_ay.append(np.nanmedian(group_ay, axis = 0))
+            avrg_group_az.append(np.nanmedian(group_az, axis = 0))
+            
+        return avrg_group_ax, avrg_group_ay, avrg_group_az
                         
                 
         
