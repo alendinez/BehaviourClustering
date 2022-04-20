@@ -1,6 +1,7 @@
 import copy
 import numpy as np
 from scipy import signal
+from tslearn.utils import to_time_series_dataset
 import more_itertools as mit
 
 import models.segment as sgmnt
@@ -652,6 +653,15 @@ class segment_manager():
             avrg_group_az.append(np.nanmedian(group_az, axis = 0))
             
         return avrg_group_ax, avrg_group_ay, avrg_group_az
-                        
+    
+    def format_segments(self, input_segments):
+        segments = copy.copy(input_segments)
+
+        formatted_segments = []
+        for segment in segments:
+            f_segment = np.squeeze(np.dstack((segment.ax, segment.ay, segment.az)))
+            formatted_segments.append(f_segment)
+        formatted_segments = to_time_series_dataset(formatted_segments)
+        return formatted_segments
                 
         

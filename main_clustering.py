@@ -4,6 +4,7 @@ import time
 import random
 import numpy as np
 import multiprocessing
+from tslearn.clustering import KShape
 
 import models.data_manager
 import models.segment_manager
@@ -122,6 +123,7 @@ if __name__ == "__main__":
     maxcorr_ax = np.load(path + "maxcorr_ax.npy")
     maxcorr_ay = np.load(path + "maxcorr_ay.npy")
     maxcorr_az = np.load(path + "maxcorr_az.npy") 
+    print("Max correlation matrices loaded")
     
     ### Call the group_segments function
     threshold_ax = 0.3
@@ -129,7 +131,8 @@ if __name__ == "__main__":
     threshold_az = 0.3
     input_segments = copy.copy(all_segments)
     groups_raw = group_segments_max_first(input_segments, maxcorr_ax, maxcorr_ay, maxcorr_az, threshold_ax, threshold_ay, threshold_az)
-    
+    print("Segments grouped")
+
     # Delete unnecesary variables to free memory
     del maxcorr_ax
     del maxcorr_ay

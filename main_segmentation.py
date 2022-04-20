@@ -3,22 +3,20 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt
 
-import models.data_manager
-import models.segment_manager
+import models.data_manager as data_manager
+import models.segment_manager as segment_manager
 
 import warnings
 warnings.filterwarnings("ignore")
 
 start_time = time.time()
 
-### Initialize data_managerager class.
-
 ### Initialize with sigma, w and mode (rest or mean).
 sigma = 1
 w = 100
 mode = "fixed"
-segment_manager = segment_manager.segment_manager(sigma, w, mode)
-data_manager = data_manager.data_manager()
+segment_manager = segment_manager(sigma, w, mode)
+data_manager = data_manager()
 
 ### Initialize a list to store the events from all the datasets.
 all_segments = []
@@ -27,7 +25,7 @@ output_path = "../Data/output/"
 all_data = np.load(output_path + "all_data.npy", allow_pickle = True)
 print("Data loaded")
 
-print("Starting...")
+print(f"Starting segmentation with w={w}, sigma={sigma}, mode='{mode}'...")
 ### Detect events for a given datasets
 for data in all_data:
     print("Processing file:", data.filename)
