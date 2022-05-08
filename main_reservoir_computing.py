@@ -8,8 +8,8 @@ from tsaug.visualization import plot
 from matplotlib import pyplot as plt
 from sklearn.metrics import plot_confusion_matrix
 
-import models.data_manager
-import models.segment_manager
+import models.data_manager as data_manager
+import models.segment_manager as segment_manager
 import models.network as Network
 
 import warnings
@@ -21,8 +21,8 @@ start_time = time.time()
 sigma = 6
 w = 100
 mode = "mean"
-segment_manager = segment_manager.segment_manager(sigma, w, mode)
-data_manager = data_manager.data_manager()
+segment_manager = segment_manager(sigma, w, mode)
+data_manager = data_manager()
 
 data_path = "../Data/CSV/"
 output_path = "../Data/output/"
@@ -36,8 +36,8 @@ print("Data loaded")
 groups_raw = np.load(output_path + "groups_raw.npy", allow_pickle = True)
 
 ### Save N most common behaviors
-N = 5
-groups = segment_manager.save_most_common_behaviors(groups_raw, N)
+N = 10
+groups = groups_raw #segment_manager.save_most_common_behaviors(groups_raw, N)
 print(N, "most common behaviours selected")
 
 ### Set up acceleration for the aligned segments
@@ -48,7 +48,7 @@ for data in all_data:
             if segment.filename == data.filename:
                 segment.setup_acceleration(data)
 '''
-
+'''
 ### Add a group label to each segment and save every segment into a common list again
 group_label = 0
 for group in groups:
@@ -56,7 +56,7 @@ for group in groups:
         segment.group_label = group_label
     group_label = group_label + 1
 print("Segments labeled")
-
+'''
 ### Cross-validation 1. Create train and test data for Reservoir Computing (80% train, 20% test).
 
 temp_groups = copy.deepcopy(groups)
