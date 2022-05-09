@@ -40,15 +40,27 @@ class segment_manager():
             index_segments = np.where((a >= self.sigma*stdev) | (a <= -self.sigma*stdev))
         if self.mode == "fixed":
             index_segments = np.where((a >= self.sigma) | (a <= -self.sigma))
+        if self.mode == "std":
+            stds = self.apply_sliding_window(a)
+            index_segments = np.where((stds >= self.sigma))
         
         index_segments = np.array(index_segments)[0]
         raw_segments = np.array([tuple(group) for group in mit.consecutive_groups(sorted(index_segments))])
 
         segments = []
         for segment in raw_segments:
-            segments.append(sgmnt(segment[0], segment[len(segment)-1], axis, filename))
+            segments.append(sgmnt(segment[0], segment[len(segment)-1]+1, axis, filename))
             
         return segments
+    
+    def apply_sliding_window(self, a):
+        stds = np.empty(len(a))
+        for i in range(len(a)):
+            start = int(max(0, i - self.w/2))
+            end = int(min(len(a), i + self.w/2 + 1))
+            
+            stds[i] = np.std(a[start:end])
+        return stds
     
     '''
     
