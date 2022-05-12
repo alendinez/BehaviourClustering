@@ -154,16 +154,11 @@ class segment_manager():
             previous_segment = self.find_prev_segment(current_segment, segments)
             next_segment = self.find_next_segment(current_segment, segments)
             
-            ### Check if there is overlappings between current segment and previous and/or next segments
+            ### Applying the window and check if there are overlappings
+            current_segment == self.apply_window(current_segment, signal_length)
+        
             previous_overlapping = self.are_segments_overlapping(current_segment, previous_segment)
             next_overlapping = self.are_segments_overlapping(current_segment, next_segment)
-            
-            ### If there is no overlappings, check if applying the window there are overlappings
-            if previous_overlapping != True and next_overlapping != True:
-                current_segment == self.apply_window(current_segment, signal_length)
-            
-                previous_overlapping = self.are_segments_overlapping(current_segment, previous_segment)
-                next_overlapping = self.are_segments_overlapping(current_segment, next_segment)
                 
             ### No need to iter backwards because we already applied the window to the previous segment
             if previous_overlapping == True:
