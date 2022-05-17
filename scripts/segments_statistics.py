@@ -24,9 +24,9 @@ import models.segment as sgmnt
 start_time = time.time()
 
 ### Initialize data_manager and segment_manager    
-sigma = 6
-w = 100
-mode = "mean"
+sigma = 0.3
+w = 200
+mode = "std"
 segment_manager = segment_manager(sigma, w, mode)
 data_manager = data_manager()
 
@@ -41,7 +41,7 @@ for data in all_data:
         if segment.filename == data.filename:
             segment.setup_acceleration(data)
 print("Acceleration data set")
-
+'''
 ### Load correlation data
 maxcorr_ax = np.load(path + "maxcorr_ax.npy")
 maxcorr_ay = np.load(path + "maxcorr_ay.npy")
@@ -60,24 +60,38 @@ segments_out.sort(reverse=True)
 for idx in segments_out:
     all_segments.pop(idx)
 print("Segments filtered")
+'''
+print("Number of segments:", len(all_segments))
+print("")
+
+#Get distances between segments
+dists = []
+prev = 0
+sgmnt_min = None
+for sgmnt in all_segments:
+    if(prev < sgmnt.start):
+        dists.append(sgmnt.start - prev)
+    prev = sgmnt.end
+dists.sort()
+l = len(dists)
+print("Min distance:", dists[0])
+print("5 percent distance:", dists[int(l*0.05)])
+print("1st quantile distance:", dists[int(l*0.25)])
+print("Median distance:", dists[int(l*0.5)])
+print("3rd quantile distance:", dists[int(l*0.75)])
+print("Max distance:", dists[-1])
+print("")
 
 all_segments.sort(key=lambda x: len(x.ax))
+print(all_segments[0].id)
 l = len(all_segments)
-print("0 percent length:", len(all_segments[0].ax))
-print("10 percent length:", len(all_segments[int(l*0.1)].ax))
-print("20 percent length:", len(all_segments[int(l*0.2)].ax))
-print("30 percent length:", len(all_segments[int(l*0.3)].ax))
-print("40 percent length:", len(all_segments[int(l*0.4)].ax))
-print("50 percent length:", len(all_segments[int(l*0.5)].ax))
-print("60 percent length:", len(all_segments[int(l*0.6)].ax))
-print("70 percent length:", len(all_segments[int(l*0.7)].ax))
-print("80 percent length:", len(all_segments[int(l*0.8)].ax))
-print("90 percent length:", len(all_segments[int(l*0.9)].ax))
-print("92 percent length:", len(all_segments[int(l*0.92)].ax))
-print("94 percent length:", len(all_segments[int(l*0.94)].ax))
-print("96 percent length:", len(all_segments[int(l*0.96)].ax))
-print("98 percent length:", len(all_segments[int(l*0.98)].ax))
-print("100 percent length:", len(all_segments[-1].ax))
+print("Min length:", len(all_segments[0].ax))
+print("1st quantile length:", len(all_segments[int(l*0.25)].ax))
+print("Median length:", len(all_segments[int(l*0.5)].ax))
+print("3rd quantile length:", len(all_segments[int(l*0.75)].ax))
+print("95 percent length:", len(all_segments[int(l*0.95)].ax))
+print("Max length:", len(all_segments[-1].ax))
+print("")
 
 #Find some metrics for the detected segments.
 length_segments_1axis = []
@@ -110,6 +124,7 @@ print("Max 3-axis segment length: "+str(max(length_segments_3axis)))
 print("Min 3-axis segment length: "+str(min(length_segments_3axis)))
 print("Mean 3-axis segment length: "+str(np.mean(length_segments_3axis)))
 print("Median 3-axis segment length: "+str(np.median(length_segments_3axis)))
+print("")
 
 finish_time = time.time()
 total_time = finish_time - start_time

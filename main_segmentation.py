@@ -4,12 +4,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import models.data_manager as data_manager
-import models.segment_manager as segment_manager
+import models.segment_manager as sm
 
 import warnings
 warnings.filterwarnings("ignore")
 
-params = [("std", 100, 0.3),("std", 150, 0.3),("std", 200, 0.3)]
+params = [("std", 150, 0.3),("std", 200, 0.3)]
 
 output_path = "../Data/output/"
 all_data = np.load(output_path + "all_data.npy", allow_pickle = True)
@@ -24,7 +24,7 @@ for mode, w, sigma in params:
     #sigma = 1
     #w = 100
     #mode = "fixed"
-    segment_manager = segment_manager(sigma, w, mode)
+    segment_manager = sm(sigma, w, mode)
 
     ### Initialize a list to store the events from all the datasets.
     all_segments = []
