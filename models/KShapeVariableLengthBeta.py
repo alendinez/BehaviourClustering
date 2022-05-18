@@ -38,10 +38,11 @@ class KShapeVariableLengthBeta(KShape):
 
         self.n_iter_ = 0
 
-        X_ = to_time_series_dataset(X)
+        X_ = X
         self._X_fit = X_
 
         if cross_dists is None:
+            X_ = to_time_series_dataset(X)
             self.norms_ = numpy.linalg.norm(X_, axis=(1, 2))
             self.cross_dists = cdist_normalized_cc(X_, X_,
                                         norms1=self.norms_,
@@ -80,7 +81,7 @@ class KShapeVariableLengthBeta(KShape):
         if hasattr(self.init, '__array__'):
             self.cluster_centers_ = self.init.copy()
         elif self.init == "random":
-            self.cluster_centers_ = rs.choice(X.shape[0], self.n_clusters)
+            self.cluster_centers_ = rs.choice(self.cross_dists.shape[0], self.n_clusters)
         else:
             raise ValueError("Value %r for parameter 'init' is "
                              "invalid" % self.init)
@@ -95,12 +96,11 @@ class KShapeVariableLengthBeta(KShape):
             if self.verbose:
                 print("%.3f" % self.inertia_, end=" --> ")
 
-            if numpy.abs(old_inertia - self.inertia_) < self.tol or \
-                    (old_labels == self.labels_).all():
+            if (old_labels == self.labels_).all():
                 if old_inertia > self.inertia_:
                     self.cluster_centers_ = old_cluster_centers
                     self._assign(X)
-                break
+                break #Mirar si inertia cambia mucho
 
             old_inertia = self.inertia_
             old_labels = self.labels_
@@ -125,10 +125,10 @@ class KShapeVariableLengthBeta(KShape):
     def _centroid_selection(self, k):
         # Select submatrix of cross dists with label k
         idxs = (self.labels_ == k).nonzero()[0]
-        dists = 1 - self.cross_dists[numpy.ix_(idxs,idxs)]
+        dists = 1. - self.cross_dists[numpy.ix_(idxs,idxs)]
         # Get the one with max value
-        centroid = idxs[dists.sum(axis=1).argmax()]
+        centroid = idxs[dists.sum(axis=1).argmin()]
         return centroid
         
-
+    #def predict
     
