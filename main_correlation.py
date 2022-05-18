@@ -109,6 +109,11 @@ if __name__ == "__main__":
 
     # Change NaNs with 0. For the computation of the algorithm is indifferent.
     X[np.isnan(X)] = 0.
+
+    ''' Para calcular sin segments en dataset
+    for i in range(len(Y)):
+        Y[i] = (Y[i] - np.mean(Y[i], axis=0, keepdims=True)) / np.std(Y[i], axis=0, keepdims=True)
+    '''
     
     norms = np.linalg.norm(X, axis=(1, 2))
 
