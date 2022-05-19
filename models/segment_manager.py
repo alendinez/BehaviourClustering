@@ -149,30 +149,41 @@ class segment_manager():
         while i < len(segments):
     
             current_segment = segments[i]
-            
             ### Find previous and next segments
             previous_segment = self.find_prev_segment(current_segment, segments)
             next_segment = self.find_next_segment(current_segment, segments)
-            
-            ### Applying the window and check if there are overlappings
-            current_segment == self.apply_window(current_segment, signal_length)
-        
+
+            ### Check if there are overlappings
             previous_overlapping = self.are_segments_overlapping(current_segment, previous_segment)
             next_overlapping = self.are_segments_overlapping(current_segment, next_segment)
                 
+
+
+            ### Apply window to the left if there is no overlapping
+            if previous_overlapping == False:
+                current_segment = self.apply_window_left(current_segment, signal_length)
+
+                ### Check if there are overlappings
+                previous_overlapping = self.are_segments_overlapping(current_segment, previous_segment)
+
             ### No need to iter backwards because we already applied the window to the previous segment
             if previous_overlapping == True:
                 new_segment = self.merge_segments(filename, current_segment, previous_segment)
                 
                 ### Check if the segment indexes have changed.
                 segments, current_segment, next_segment, previous_segment, i = self.update_segments(segments, current_segment, previous_segment, next_segment, new_segment, "previous")
-                previous_overlapping = False
-                    
+            
+
+
+            ### Apply window to the right if there is no overlapping
+            if next_overlapping == False:
+                current_segment = self.apply_window_right(current_segment, signal_length)
+
+                ### Check if there are overlappings
+                next_overlapping = self.are_segments_overlapping(current_segment, next_segment)
+
             while next_overlapping == True:
                 new_segment = self.merge_segments(filename, current_segment, next_segment)
-                
-                ### Check if the segment start or end have changed. If so, check if applying the window there will be an overlap with previous or next segments. 
-                #segment_changed = self.HasSegmentChanged(current_segment, new_segment)
                 
                 segments, current_segment, next_segment, previous_segment, i = self.update_segments(segments, current_segment, previous_segment, next_segment, new_segment, "next")
                 next_overlapping = self.are_segments_overlapping(current_segment, next_segment)
@@ -180,9 +191,6 @@ class segment_manager():
                 if next_overlapping != True:
                     current_segment = self.apply_window_right(current_segment, signal_length)
                     next_overlapping = self.are_segments_overlapping(current_segment, next_segment)
-                        
-                               
-            
             else:
                 i = i + 1
                 
@@ -668,7 +676,7 @@ class segment_manager():
         for segment in segments:
             f_segment = np.squeeze(np.dstack((segment.ax, segment.ay, segment.az)))
             formatted_segments.append(f_segment)
-        formatted_segments = to_time_series_dataset(formatted_segments)
+        #formatted_segments = to_time_series_dataset(formatted_segments)
         return formatted_segments
                 
         

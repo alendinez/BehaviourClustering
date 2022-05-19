@@ -96,11 +96,10 @@ class KShapeVariableLengthBeta(KShape):
             if self.verbose:
                 print("%.3f" % self.inertia_, end=" --> ")
 
-            if (old_labels == self.labels_).all():
-                if old_inertia > self.inertia_:
-                    self.cluster_centers_ = old_cluster_centers
-                    self._assign(X)
-                break #Mirar si inertia cambia mucho
+            if (old_inertia - self.inertia_ < 0) or (old_labels == self.labels_).all():
+                self.cluster_centers_ = old_cluster_centers
+                self._assign(X)
+                break 
 
             old_inertia = self.inertia_
             old_labels = self.labels_

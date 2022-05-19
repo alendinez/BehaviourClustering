@@ -41,7 +41,7 @@ def compute_max_corr_parallel(segments, norms):
     output = []
     compute_max_corr_1segment_partial = partial(compute_max_corr_1segment, segments = segments, norms = norms)
     
-    pool = multiprocessing.Pool(processes = 14)
+    pool = multiprocessing.Pool(processes = 15)
     o = pool.map_async(compute_max_corr_1segment_partial, range(len(segments))).get()
 
     output.append(o)
@@ -71,8 +71,8 @@ if __name__ == "__main__":
 
     ### Initialize data_manager and segment_manager    
     sigma = 0.3
-    w = 200
-    mode = "mean"
+    w = 100
+    mode = "std"
     segment_manager = segment_manager(sigma, w, mode)
     data_manager = data_manager()
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
             if segment.filename == data.filename:
                 segment.setup_acceleration(data)
     print("Acceleration data set")
-
+    '''
     ### Segments filtering
     segments_out = [idx for idx in range(len(all_segments)) if len(all_segments[idx].ax) > 5000]
     segments_excluded = 1 - ((len(all_segments) - len(segments_out)) / len(all_segments))
@@ -109,20 +109,22 @@ if __name__ == "__main__":
 
     # Change NaNs with 0. For the computation of the algorithm is indifferent.
     X[np.isnan(X)] = 0.
-
-    ''' Para calcular sin segments en dataset
-    for i in range(len(Y)):
-        Y[i] = (Y[i] - np.mean(Y[i], axis=0, keepdims=True)) / np.std(Y[i], axis=0, keepdims=True)
     '''
+    X = segment_manager.format_segments(all_segments)
+    norms = []
+    for i in range(len(X)):
+        X[i] = (X[i] - np.mean(X[i], axis=0, keepdims=True)) / np.std(X[i], axis=0, keepdims=True)
+        norms.append(np.linalg.norm(X[i]))
     
-    norms = np.linalg.norm(X, axis=(1, 2))
+    #norms = np.linalg.norm(X, axis=(1, 2))
+    norms = np.array(norms)
 
     # Delete unnecesary variables to free memory
     del all_data
     del all_segments
     del data_manager
     del data
-    del segments_out
+    #del segments_out
     
     ### Method 2 for parallel processing of max correlation:
     ### For each axis, create several parallel processes using map_async
@@ -130,7 +132,7 @@ if __name__ == "__main__":
     print("Starting the computation of max correlation...")
     maxcorr = np.array(compute_max_corr_parallel(X, norms))[0]
     maxcorr = maxcorr + maxcorr.T # Copy the upper triangle in the lower triangle
-    np.save(os.path.join(path, 'maxcorr_03_200.npy'), maxcorr)
+    np.save(os.path.join(path, 'maxcorr_03_100.npy'), maxcorr)
 
     finish_time = time.time()
     total_time = finish_time - start_time

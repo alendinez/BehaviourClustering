@@ -19,6 +19,7 @@ import models.data as dt
 import models.data_manager as data_manager
 import models.segment_manager as segment_manager
 import models.segment as sgmnt
+import models.KShapeVariableLengthBeta as KShapeVariableLengthBeta
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -72,10 +73,10 @@ del maxcorr_az
 del segments_out
 
 ### Load model
-km_sdtw = TimeSeriesKMeans.from_hdf5(path + 'trained_model_2.hdf5')
+ksvlb = KShapeVariableLengthBeta.from_hdf5(path + 'ksvlb_trained_model_5_clusters.hdf5')
 
-labels = km_sdtw.labels_ 
-n_clusters = len(km_sdtw.cluster_centers_)
+labels = ksvlb.labels_ 
+n_clusters = len(ksvlb.cluster_centers_)
 assert len(labels) == len(all_segments)
 
 groups_raw = [[] for i in range(n_clusters)]

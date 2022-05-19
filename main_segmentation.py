@@ -9,7 +9,7 @@ import models.segment_manager as sm
 import warnings
 warnings.filterwarnings("ignore")
 
-params = [("std", 150, 0.3),("std", 200, 0.3)]
+params = [("std", 100, 0.3),("std", 150, 0.3),("std", 200, 0.3)]
 
 output_path = "../Data/output/"
 all_data = np.load(output_path + "all_data.npy", allow_pickle = True)
@@ -57,6 +57,7 @@ for mode, w, sigma in params:
     ### Export all segments to CSV
     data_manager.export_all_segments(all_segments, sigma, w, output_path)
     print("Total number of segments: "+str(len(all_segments)))
+
 
     finish_time = time.time()
     total_time = finish_time - start_time
