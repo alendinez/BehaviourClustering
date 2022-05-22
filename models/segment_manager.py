@@ -156,7 +156,7 @@ class segment_manager():
             ### Check if there are overlappings
             previous_overlapping = self.are_segments_overlapping(current_segment, previous_segment)
             next_overlapping = self.are_segments_overlapping(current_segment, next_segment)
-                
+            
 
 
             ### Apply window to the left if there is no overlapping

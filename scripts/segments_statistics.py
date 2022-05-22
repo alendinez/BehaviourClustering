@@ -80,6 +80,8 @@ print("1st quantile distance:", dists[int(l*0.25)])
 print("Median distance:", dists[int(l*0.5)])
 print("3rd quantile distance:", dists[int(l*0.75)])
 print("Max distance:", dists[-1])
+print("Number of segments with dist < w/2", np.argmax(np.array(dists)>=int(w/2)))
+print("Number of segments with dist < w", np.argmax(np.array(dists)>=int(w)))
 print("")
 
 all_segments.sort(key=lambda x: len(x.ax))

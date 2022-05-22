@@ -132,6 +132,7 @@ if __name__ == "__main__":
     print("Starting the computation of max correlation...")
     maxcorr = np.array(compute_max_corr_parallel(X, norms))[0]
     maxcorr = maxcorr + maxcorr.T # Copy the upper triangle in the lower triangle
+    np.fill_diagonal(maxcorr, 1.)
     np.save(os.path.join(path, 'maxcorr_03_100.npy'), maxcorr)
 
     finish_time = time.time()
