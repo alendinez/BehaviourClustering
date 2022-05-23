@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     ### Initialize data_manager and segment_manager    
     sigma = 0.3
-    w = 100
+    w = 150
     mode = "std"
     segment_manager = segment_manager(sigma, w, mode)
     data_manager = data_manager()
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     X = segment_manager.format_segments(all_segments)
     norms = []
     for i in range(len(X)):
-        X[i] = (X[i] - np.mean(X[i], axis=0, keepdims=True)) / np.std(X[i], axis=0, keepdims=True)
+        X[i] = (X[i] - np.mean(X[i], keepdims=True)) / np.std(X[i], keepdims=True)
         norms.append(np.linalg.norm(X[i]))
     
     #norms = np.linalg.norm(X, axis=(1, 2))
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     maxcorr = np.array(compute_max_corr_parallel(X, norms))[0]
     maxcorr = maxcorr + maxcorr.T # Copy the upper triangle in the lower triangle
     np.fill_diagonal(maxcorr, 1.)
-    np.save(os.path.join(path, 'maxcorr_03_100.npy'), maxcorr)
+    np.save(os.path.join(path, f'maxcorr_{sigma}_{w}.npy'), maxcorr)
 
     finish_time = time.time()
     total_time = finish_time - start_time
