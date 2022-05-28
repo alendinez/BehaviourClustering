@@ -38,11 +38,18 @@ class KShapeVariableLength(KShape):
 
         self.n_iter_ = 0
 
+        X_ = X
         self._X_fit = X_
-        self.norms_ = numpy.array([numpy.linalg.norm(x[~numpy.isnan(x)]) for x in X_]) # Calculation of the norm adapted for variable length
 
-        if self.cross_dists == None:
-            self.cross_dists = self._cross_dists(X)
+        if cross_dists is None:
+            X_ = to_time_series_dataset(X)
+            self.norms_ = numpy.linalg.norm(X_, axis=(1, 2))
+            self.cross_dists = cdist_normalized_cc(X_, X_,
+                                        norms1=self.norms_,
+                                        norms2=self.norms_,
+                                        self_similarity=False)
+        else:
+            self.cross_dists = cross_dists
 
         _check_initial_guess(self.init, self.n_clusters)
 
@@ -66,7 +73,6 @@ class KShapeVariableLength(KShape):
             except EmptyClusterError:
                 if self.verbose:
                     print("Resumed because of empty cluster")
-        self.norms_centroids_ = numpy.array([numpy.linalg.norm(x[~numpy.isnan(x)]) for x in self.cluster_centers_])
         self._post_fit(X_, best_correct_centroids, min_inertia)
         return self
         
@@ -75,28 +81,26 @@ class KShapeVariableLength(KShape):
         if hasattr(self.init, '__array__'):
             self.cluster_centers_ = self.init.copy()
         elif self.init == "random":
-            indices = rs.choice(X.shape[0], self.n_clusters)
-            self.cluster_centers_ = X[indices].copy()
+            self.cluster_centers_ = rs.choice(self.cross_dists.shape[0], self.n_clusters)
         else:
             raise ValueError("Value %r for parameter 'init' is "
                              "invalid" % self.init)
-        self.norms_centroids_ = numpy.array([numpy.linalg.norm(x[~numpy.isnan(x)]) for x in self.cluster_centers_])
         self._assign(X)
         old_inertia = numpy.inf
         old_labels = self.labels_
 
         for it in range(self.max_iter):
             old_cluster_centers = self.cluster_centers_.copy()
-            self._update_centroids(X) # !!!!!!!!!!!!!!!!!!!!!!!
+            self._update_centroids(X)
             self._assign(X)
             if self.verbose:
                 print("%.3f" % self.inertia_, end=" --> ")
 
-            if numpy.abs(old_inertia - self.inertia_) < self.tol or \
-                    (old_labels == self.labels_):
+            #if numpy.abs(old_inertia - self.inertia_) < self.tol or (old_labels == self.labels_).all():
+            if (old_labels == self.labels_).all():
                 self.cluster_centers_ = old_cluster_centers
                 self._assign(X)
-                break
+                break 
 
             old_inertia = self.inertia_
             old_labels = self.labels_
@@ -110,9 +114,21 @@ class KShapeVariableLength(KShape):
 
     def _update_centroids(self, X):
         for k in range(self.n_clusters):
-            self.cluster_centers_[k] = self._shape_extraction(X, k)
-        self.cluster_centers_ = TimeSeriesScalerMeanVariance(
-            mu=0., std=1.).fit_transform(self.cluster_centers_)
-        self.norms_centroids_ = numpy.array([numpy.linalg.norm(x[~numpy.isnan(x)]) for x in self.cluster_centers_])
+            self.cluster_centers_[k] = self._centroid_selection(k)
 
+    def _assign(self, X):
+        dists = 1. - self.cross_dists
+        self.labels_ = dists[:,self.cluster_centers_].argmin(axis=1)
+        _check_no_empty_cluster(self.labels_, self.n_clusters)
+        self.inertia_ = _compute_inertia(dists[:,self.cluster_centers_], self.labels_)
+
+    def _centroid_selection(self, k):
+        # Select submatrix of cross dists with label k
+        idxs = (self.labels_ == k).nonzero()[0]
+        dists = 1. - self.cross_dists[numpy.ix_(idxs,idxs)]
+        # Get the one with max value
+        centroid = idxs[dists.sum(axis=1).argmin()]
+        return centroid
+        
+    #def predict
     

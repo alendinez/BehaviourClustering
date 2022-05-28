@@ -18,9 +18,9 @@ warnings.filterwarnings("ignore")
 start_time = time.time()
 
 ### Initialize data_manager and segment_manager    
-sigma = 6
-w = 100
-mode = "mean"
+sigma = 0.3
+w = 150
+mode = "std"
 segment_manager = segment_manager(sigma, w, mode)
 data_manager = data_manager()
 
@@ -103,7 +103,7 @@ print("Data is ready for training")
 
 ### Train and test Reservoir Computer Network
 Network = Network.Network()
-num_nodes = 300
+num_nodes = 200
 
 input_probability = 0.5
 reservoir_probability = 0.5
@@ -134,5 +134,22 @@ print("Plotting confusion matrix...")
 fig, ax = plt.subplots(figsize = (12,9))
 disp = plot_confusion_matrix(Network.regressor, Network.mean_test_matrix.T, labels_test.T, normalize='true', ax=ax)
 disp.ax_.set_title("Confusion matrix")
+plt.show()
+
+
+
+
+Network.mean_test_matrix = np.zeros([Network.N, num_segments_train])
+Network.test_network(train_data, num_segments_train, len_segments_train, num_nodes, num_groups, sum(len_segments_train))
+
+if classifier == 'log':
+    print(f'Performance using {classifier} over train data: {Network.regressor.score(Network.mean_test_matrix.T,labels_train.T)}')
+    prediction = Network.regressor.predict(Network.mean_test_matrix.T)
+
+### Plot confusion matrix
+print("Plotting confusion matrix...")
+fig, ax = plt.subplots(figsize = (12,9))
+disp = plot_confusion_matrix(Network.regressor, Network.mean_test_matrix.T, labels_train.T, normalize='true', ax=ax)
+disp.ax_.set_title("Confusion matrix of train data")
 plt.show()
 

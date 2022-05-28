@@ -6,10 +6,14 @@ import time
 import numpy as np
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
+import multiprocessing
+from scipy import signal
+from functools import partial
 
 import models.segment_manager as segment_manager
 import models.data_manager as data_manager
 import models.segment as segment
+import models.KShapeVariableLength as KShapeVariableLength
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -62,49 +66,71 @@ def get_continuous_cmap(hex_list, float_list=None,):
     cmp = mcolors.LinearSegmentedColormap("my_cmap", segmentdata=cdict, N=256)
     return cmp
 
+def compute_max_corr_1segment(segment, segments):
+    maxcorr, maxcorr_lag = np.empty(len(segments)), np.empty(len(segments))
+    for j in range(len(segments)):
+        a = segment
+        b = segments[j]
+            
+        normalized_a = np.float32((a - np.mean(a)) / np.std(a))
+        normalized_b = np.float32((b - np.mean(b)) / np.std(b))
+        
+        corr = np.float32(signal.correlate2d(a, b, mode = "full")[:,2] / (np.linalg.norm(a)*np.linalg.norm(b)))
+        maxcorr[j] = np.float32(max(corr))
+        
+        lag = signal.correlation_lags(normalized_a.size, normalized_b.size, mode = 'full')
+        maxcorr_lag[j] = np.float16(lag[np.argmax(corr)])
+        
+    return maxcorr, maxcorr_lag
+
 start_time = time.time()
 
 ### Initialize data_manager and segment_manager    
-sigma = 6
-w = 100
-mode = "mean"
+sigma = 0.3
+w = 150
+mode = "std"
 segment_manager = segment_manager(sigma, w, mode)
 data_manager = data_manager()
 
 output_path = "../../Data/output/"
-all_data = np.load(output_path + "all_data.npy", allow_pickle = True)
-print("Data loaded")
 
-groups_raw = np.load(output_path + "groups_raw.npy", allow_pickle = True)
-lag_ax = np.load(output_path + "lag_ax.npy")
+groups = np.load(output_path + "groups_raw.npy", allow_pickle = True)
+ksvl = KShapeVariableLength.from_hdf5(output_path + 'ksvl_6_clusters.hdf5')
 
-### Check the number of groups with more than 100 elements
-plus100 = 0
-total_segments = 0
-segments_in_100 = 0
-for group in groups_raw:
-    if len(group) >= 100:
-        plus100 = plus100+1
-        segments_in_100 = segments_in_100+len(group)
-    total_segments = total_segments+len(group)
-        
-percentage_in_100 = (segments_in_100/total_segments)*100
-percentage_out_100 = 100 - (segments_in_100/total_segments)*100
-print("Number of groups with more than 100 elements: "+str(plus100))
-print("Percentage of segments in these groups: "+str(percentage_in_100))
-print("Percentage of segments out of these groups: "+str(percentage_out_100))
-
-### Save N most common behaviors
-N = 10
-groups = segment_manager.save_most_common_behaviors(groups_raw, N)
-print(N, "most common behaviours selected")
+centroids = []
 
 ### Align segments from the same group
-groups = segment_manager.align_segments(groups, lag_ax)
+avrg_group_ax, avrg_group_ay, avrg_group_az = [], [], []
+for i in range(len(groups)):
+    segments = groups[i]
+    cluster_idx = ksvl.cluster_centers_[i]
+    centroid = [np.squeeze(np.dstack((sgmnt.ax, sgmnt.ay, sgmnt.az))) for sgmnt in segments if sgmnt.id == cluster_idx][0]
+    centroids.append(centroid)
+
+    avrg_group_ax.append(centroid[:,0])
+    avrg_group_ay.append(centroid[:,1])
+    avrg_group_az.append(centroid[:,2])
+
+similar_segments_aligned = []
+for i in range(len(groups)):
+    X = segment_manager.format_segments(groups[i])
+    maxcorr, maxcorr_lag = compute_max_corr_1segment(centroids[i], X)
+
+    temp_similar_segments_aligned = []
+    for j in range(len(groups[i])):
+        current_segment = copy.copy(groups[i][j])
+        
+        current_segment.start = int(current_segment.start) - int(maxcorr_lag[j])
+        current_segment.end = int(current_segment.end) - int(maxcorr_lag[j])
+        
+        temp_similar_segments_aligned.append(current_segment)
+    
+    similar_segments_aligned.append(temp_similar_segments_aligned)
+
+groups = similar_segments_aligned
+print("Segments aligned")
 
 ### Find average behavior for each group in the three axis and plot it
-avrg_group_ax, avrg_group_ay, avrg_group_az, avrg_group_pressure = segment_manager.find_average_behavior(groups, mode="nanmean")
-
 for group in groups:
     group = sorted(group, key=lambda segment: len(segment.ax))
 
@@ -142,13 +168,13 @@ for i in range(len(groups)):
     j = 0
     for segment in groups[i]:
         ax[0,0].plot(segment.ax[:len(avrg_group_ax[i])], c=cmap1(j), lw=0.3, alpha = 0.3)
-        ax[0,0].set_ylim([-9, 9])
+        ax[0,0].set_ylim([min_ax-1, max_ax+1])
         ax[0,0].set_ylabel("ax")
         ax[1,0].plot(segment.ay[:len(avrg_group_ax[i])], c=cmap2(j), lw=0.3, alpha = 0.3)
-        ax[1,0].set_ylim([-9, 9])
+        ax[1,0].set_ylim([min_ay-1, max_ay+1])
         ax[1,0].set_ylabel("ay")
         ax[2,0].plot(segment.az[:len(avrg_group_ax[i])], c=cmap3(j), lw=0.3, alpha = 0.3)
-        ax[2,0].set_ylim([-9, 9])
+        ax[2,0].set_ylim([min_az-1, max_az+1])
         ax[2,0].set_ylabel("az")
         
         j += 1

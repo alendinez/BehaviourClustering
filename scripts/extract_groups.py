@@ -19,7 +19,7 @@ import models.data as dt
 import models.data_manager as data_manager
 import models.segment_manager as segment_manager
 import models.segment as sgmnt
-import models.KShapeVariableLengthBeta as KShapeVariableLengthBeta
+import models.KShapeVariableLength as KShapeVariableLength
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -27,9 +27,9 @@ warnings.filterwarnings("ignore")
 start_time = time.time()
 
 ### Initialize data_manager and segment_manager    
-sigma = 6
-w = 100
-mode = "mean"
+sigma = 0.3
+w = 150
+mode = "std"
 segment_manager = segment_manager(sigma, w, mode)
 data_manager = data_manager()
 
@@ -45,38 +45,27 @@ for data in all_data:
             segment.setup_acceleration(data)
 print("Acceleration data set")
 
-### Load correlation data
-maxcorr_ax = np.load(path + "maxcorr_ax.npy")
-maxcorr_ay = np.load(path + "maxcorr_ay.npy")
-maxcorr_az = np.load(path + "maxcorr_az.npy") 
-
-np.fill_diagonal(maxcorr_ax, 0.0)
-np.fill_diagonal(maxcorr_ay, 0.0)
-np.fill_diagonal(maxcorr_az, 0.0)
-
-maxcorr = np.dstack((maxcorr_ax, maxcorr_ay, maxcorr_az))
-print("Max correlation matrices loaded")
-
 ### Segments filtering
-segments_out = [idx for idx in range(len(maxcorr)) if np.all(maxcorr[idx].sum(axis=1)<1.8)]
+segments_copy = all_segments.copy()
+segments_copy.sort(key=lambda x: len(x.ax), reverse=True)
+l = len(segments_copy)
+segments_out = [x.id for x in segments_copy[:int(l*0.05)]]
 segments_out.sort(reverse=True)
 for idx in segments_out:
     all_segments.pop(idx)
 print("Segments filtered")
 
-### Delete unnecessary variables
-del all_data
-del maxcorr
-del maxcorr_ax
-del maxcorr_ay
-del maxcorr_az
-del segments_out
+i = 0
+for segment in all_segments:
+    segment.id = i
+    i = i+1
+print("Segments reindexed")
 
 ### Load model
-ksvlb = KShapeVariableLengthBeta.from_hdf5(path + 'ksvlb_trained_model_5_clusters.hdf5')
+ksvl = KShapeVariableLength.from_hdf5(path + 'ksvl_8_clusters.hdf5')
 
-labels = ksvlb.labels_ 
-n_clusters = len(ksvlb.cluster_centers_)
+labels = ksvl.labels_ 
+n_clusters = len(ksvl.cluster_centers_)
 assert len(labels) == len(all_segments)
 
 groups_raw = [[] for i in range(n_clusters)]
