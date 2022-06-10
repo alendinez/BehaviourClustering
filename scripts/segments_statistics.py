@@ -34,13 +34,21 @@ path = "../../Data/output/"
 all_data = np.load(path + "all_data.npy", allow_pickle = True)
 print("Data loaded")
 
-### Load previously created acceleration segments
-all_segments = data_manager.load_all_segments_linux(path, sigma, w)
-for data in all_data:
-    for segment in all_segments:
-        if segment.filename == data.filename:
-            segment.setup_acceleration(data)
-print("Acceleration data set")
+ws = [50,70,80,100,150,200]
+ss = [0.3,0.4,0.5,0.6]
+
+for w in ws:
+    for sigma in ss:
+        ### Load previously created acceleration segments
+        all_segments = data_manager.load_all_segments_linux(path, sigma, w)
+        for data in all_data:
+            for segment in all_segments:
+                if segment.filename == data.filename:
+                    segment.setup_acceleration(data)
+
+        all_segments.sort(key=lambda x: len(x.ax))
+        l = len(all_segments)
+        print(f"{w},{sigma}:", len(all_segments[int(l*0.5)].ax))
 '''
 ### Load correlation data
 maxcorr_ax = np.load(path + "maxcorr_ax.npy")
@@ -60,6 +68,7 @@ segments_out.sort(reverse=True)
 for idx in segments_out:
     all_segments.pop(idx)
 print("Segments filtered")
+'''
 '''
 print("Number of segments:", len(all_segments))
 print("")
@@ -127,7 +136,7 @@ print("Min 3-axis segment length: "+str(min(length_segments_3axis)))
 print("Mean 3-axis segment length: "+str(np.mean(length_segments_3axis)))
 print("Median 3-axis segment length: "+str(np.median(length_segments_3axis)))
 print("")
-
+'''
 finish_time = time.time()
 total_time = finish_time - start_time
 print("Computing time:",total_time, "seconds.")

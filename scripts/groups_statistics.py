@@ -83,6 +83,14 @@ def compute_max_corr_1segment(segment, segments):
         
     return maxcorr, maxcorr_lag
 
+def centroid_selection(cross_dists, labels, k):
+    # Select submatrix of cross dists with label k
+    idxs = (labels == k).nonzero()[0]
+    dists = 1. - cross_dists[np.ix_(idxs,idxs)]
+    # Get the one with max value
+    centroid = idxs[dists.sum(axis=1).argmin()]
+    return centroid
+
 start_time = time.time()
 
 ### Initialize data_manager and segment_manager    
@@ -94,27 +102,85 @@ data_manager = data_manager()
 
 output_path = "../../Data/output/"
 
-groups = np.load(output_path + "groups_raw.npy", allow_pickle = True)
-ksvl = KShapeVariableLength.from_hdf5(output_path + 'ksvl_6_clusters.hdf5')
+### Load all data
+all_data = np.load(output_path + "all_data.npy", allow_pickle = True)
+print("Data loaded")
 
-centroids = []
+### Load previously created acceleration segments
+all_segments = data_manager.load_all_segments_linux(output_path, sigma, w)
+for data in all_data:
+    for segment in all_segments:
+        if segment.filename == data.filename:
+            segment.setup_acceleration(data)
+print("Acceleration data set")
 
-### Align segments from the same group
-avrg_group_ax, avrg_group_ay, avrg_group_az = [], [], []
+### Segments filtering
+segments_copy = all_segments.copy()
+segments_copy.sort(key=lambda x: len(x.ax), reverse=True)
+l = len(segments_copy)
+segments_in = [x.id for x in segments_copy[int(l*0.05):]]
+segments_in.sort()
+assert segments_in[0] == min(segments_in)
+print("Segments filtered")
+
+maxcorr = np.load(output_path + f"maxcorr_{sigma}_{w}.npy")
+maxcorr = maxcorr[np.ix_(segments_in, segments_in)]
+print("Max correlation matrix loaded:", maxcorr.shape)
+
+### Segments filtering
+segments_copy = all_segments.copy()
+segments_copy.sort(key=lambda x: len(x.ax), reverse=True)
+l = len(segments_copy)
+segments_out = [x.id for x in segments_copy[:int(l*0.05)]]
+segments_out.sort(reverse=True)
+for idx in segments_out:
+    all_segments.pop(idx)
+print("Segments filtered")
+
+i = 0
+for segment in all_segments:
+    segment.id = i
+    i = i+1
+print("Segments reindexed")
+
+groups = np.load(output_path + "groups_raw_12_4.npy", allow_pickle = True)
+
+### Get labels array
+labels = np.empty(len(maxcorr), dtype=int)
 for i in range(len(groups)):
-    segments = groups[i]
-    cluster_idx = ksvl.cluster_centers_[i]
-    centroid = [np.squeeze(np.dstack((sgmnt.ax, sgmnt.ay, sgmnt.az))) for sgmnt in segments if sgmnt.id == cluster_idx][0]
+    for idx in groups[i]:
+        labels[idx] = i
+
+### Get centroids
+centroids = []
+n_clusters = len(groups)
+avrg_group_ax, avrg_group_ay, avrg_group_az = [], [], []
+cluster_centers = np.empty(n_clusters, dtype=int)
+for i in range(n_clusters):
+    cluster_centers[i] = centroid_selection(maxcorr, labels, i)
+
+    cluster_idx = cluster_centers[i]
+    centroid = np.squeeze(np.dstack((all_segments[cluster_idx].ax, all_segments[cluster_idx].ay, all_segments[cluster_idx].az)))
     centroids.append(centroid)
 
     avrg_group_ax.append(centroid[:,0])
     avrg_group_ay.append(centroid[:,1])
     avrg_group_az.append(centroid[:,2])
 
-similar_segments_aligned = []
+### Substitute segment index with the real segment
+groups_segments = [[] for i in range(len(groups))]
+for i in range(len(groups)):
+    for segment_idx in groups[i]:
+        groups_segments[i].append(all_segments[segment_idx])
+
+groups = groups_segments
+'''
+### Align segments from the same group
+maxcorr_lags = []
 for i in range(len(groups)):
     X = segment_manager.format_segments(groups[i])
     maxcorr, maxcorr_lag = compute_max_corr_1segment(centroids[i], X)
+    maxcorr_lags.append(maxcorr_lag)
 
     temp_similar_segments_aligned = []
     for j in range(len(groups[i])):
@@ -126,8 +192,9 @@ for i in range(len(groups)):
         temp_similar_segments_aligned.append(current_segment)
     
     similar_segments_aligned.append(temp_similar_segments_aligned)
-
+    
 groups = similar_segments_aligned
+'''
 print("Segments aligned")
 
 ### Find average behavior for each group in the three axis and plot it
@@ -156,7 +223,7 @@ for i in range(len(groups)):
     max_ay, min_ay = max(avrg_group_ay[i]), min(avrg_group_ay[i])
     max_az, min_az = max(avrg_group_az[i]), min(avrg_group_az[i])
     
-    
+    '''
     fig, ax = plt.subplots(3,2,figsize = (16,12))
     ax[0,1].plot(avrg_group_ax[i], 'lightseagreen')
     ax[0,1].set_ylim([min_ax-1, max_ax+1])
@@ -165,23 +232,36 @@ for i in range(len(groups)):
     ax[2,1].plot(avrg_group_az[i], 'olive')
     ax[2,1].set_ylim([min_az-1, max_az+1])
     
-    j = 0
-    for segment in groups[i]:
-        ax[0,0].plot(segment.ax[:len(avrg_group_ax[i])], c=cmap1(j), lw=0.3, alpha = 0.3)
+    for j in range(len(groups[i])):
+        lag = int(maxcorr_lags[i][j])
+        ax[0,0].plot(range(-lag, len(groups[i][j].ax[:len(avrg_group_ax[i])])-lag), groups[i][j].ax[:len(avrg_group_ax[i])], c=cmap1(j), lw=0.3, alpha = 0.3)
         ax[0,0].set_ylim([min_ax-1, max_ax+1])
+        ax[0,0].set_xlim([0, len(avrg_group_ax[i])])
         ax[0,0].set_ylabel("ax")
-        ax[1,0].plot(segment.ay[:len(avrg_group_ax[i])], c=cmap2(j), lw=0.3, alpha = 0.3)
+        ax[1,0].plot(range(-lag, len(groups[i][j].ax[:len(avrg_group_ax[i])])-lag), groups[i][j].ay[:len(avrg_group_ax[i])], c=cmap2(j), lw=0.3, alpha = 0.3)
         ax[1,0].set_ylim([min_ay-1, max_ay+1])
+        ax[1,0].set_xlim([0, len(avrg_group_ax[i])])
         ax[1,0].set_ylabel("ay")
-        ax[2,0].plot(segment.az[:len(avrg_group_ax[i])], c=cmap3(j), lw=0.3, alpha = 0.3)
+        ax[2,0].plot(range(-lag, len(groups[i][j].ax[:len(avrg_group_ax[i])])-lag), groups[i][j].az[:len(avrg_group_ax[i])], c=cmap3(j), lw=0.3, alpha = 0.3)
         ax[2,0].set_ylim([min_az-1, max_az+1])
+        ax[2,0].set_xlim([0, len(avrg_group_ax[i])])
         ax[2,0].set_ylabel("az")
         
-        j += 1
     
     fig.suptitle(f'All segments and avrg segment from group {i}, group size: {str(len(groups[i]))}', y = 0.9)
     plt.savefig(output_path + f'group{i}.png')
+    '''
+    fig, ax = plt.subplots(3,1,figsize = (16,12))
+    ax[0].plot(avrg_group_ax[i], 'lightseagreen')
+    ax[0].set_ylim([min_ax-1, max_ax+1])
+    ax[1].plot(avrg_group_ay[i], 'coral')
+    ax[1].set_ylim([min_ay-1, max_ay+1])
+    ax[2].plot(avrg_group_az[i], 'olive')
+    ax[2].set_ylim([min_az-1, max_az+1])
+        
     
+    fig.suptitle(f'All segments and avrg segment from group {i}, group size: {str(len(groups[i]))}', y = 0.9)
+    plt.savefig(output_path + f'group{i}.png')
 finish_time = time.time()
 total_time = finish_time - start_time
 print("Computing time:",total_time, "seconds.")

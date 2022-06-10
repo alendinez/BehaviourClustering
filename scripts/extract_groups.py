@@ -62,7 +62,7 @@ for segment in all_segments:
 print("Segments reindexed")
 
 ### Load model
-ksvl = KShapeVariableLength.from_hdf5(path + 'ksvl_8_clusters.hdf5')
+ksvl = KShapeVariableLength.from_hdf5(path + 'ksvl_16_clusters.hdf5')
 
 labels = ksvl.labels_ 
 n_clusters = len(ksvl.cluster_centers_)
@@ -71,12 +71,12 @@ assert len(labels) == len(all_segments)
 groups_raw = [[] for i in range(n_clusters)]
 
 for label, segment in zip(labels, all_segments):
-    segment.group_label = label
-    groups_raw[label].append(segment)
+    #segment.group_label = label
+    groups_raw[label].append(segment.id)
 
 print("Number of raw groups: "+str(len(groups_raw)))
 groups_raw = np.array(groups_raw, dtype="object")
-np.save(os.path.join(path, 'groups_raw.npy'), groups_raw)
+np.save(os.path.join(path, 'groups_raw_16.npy'), groups_raw)
 
 finish_time = time.time()
 total_time = finish_time - start_time

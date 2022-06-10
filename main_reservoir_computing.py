@@ -3,6 +3,7 @@ import time
 import numpy as np
 import tsaug
 import random
+import os
 
 from tsaug.visualization import plot
 from matplotlib import pyplot as plt
@@ -26,16 +27,55 @@ data_manager = data_manager()
 
 output_path = "../Data/output/"
 
-groups = np.load(output_path + "groups_raw.npy", allow_pickle = True)
+all_data = np.load(output_path + "all_data.npy", allow_pickle = True)
+print("Data loaded")
+
+### Load previously created acceleration segments
+all_segments = data_manager.load_all_segments_linux(output_path, sigma, w)
+for data in all_data:
+    for segment in all_segments:
+        if segment.filename == data.filename:
+            segment.setup_acceleration(data)
+print("Acceleration data set")
+
+### Segments filtering
+segments_copy = all_segments.copy()
+segments_copy.sort(key=lambda x: len(x.ax), reverse=True)
+l = len(segments_copy)
+segments_out = [x.id for x in segments_copy[:int(l*0.05)]]
+segments_out.sort(reverse=True)
+for idx in segments_out:
+    all_segments.pop(idx)
+print("Segments filtered")
+
+i = 0
+for segment in all_segments:
+    segment.id = i
+    i = i+1
+print("Segments reindexed")
+
+groups_idx = np.load(output_path + "groups_raw_16_4.npy", allow_pickle = True)
+groups =  []
+for i in range(len(groups_idx)):
+    segments = []
+    for idx in groups_idx[i]:
+        sgmnt = all_segments[idx]
+        sgmnt.group_label = i
+        segments.append(sgmnt)
+    groups.append(segments)
+
+'''
+groups = np.load(output_path + "groups_raw_2.npy", allow_pickle = True)
+'''
 
 ### Cross-validation 1. Create train and test data for Reservoir Computing (80% train, 20% test).
 
-temp_groups = copy.deepcopy(groups)
+augmented_groups = copy.deepcopy(groups)
     
 segments_train, segments_test = [], []
 
 num_groups = len(groups)
-max_group_length = int(max([len(group) for group in groups[1:len(groups)-1]]))
+max_group_length = int(max([len(group) for group in groups]))
 
 num_segments_train_pergroup = int(0.8*max_group_length)
 num_segments_test_pergroup = max_group_length - num_segments_train_pergroup
@@ -44,26 +84,33 @@ num_segments_test = num_segments_test_pergroup*num_groups  # Number of segments 
 print("Number of train segments:", num_segments_train)
 print("Number of test segments:", num_segments_test)
 
-train_segments = []
-test_segments = []
 train_data_ax, train_data_ay, train_data_az, len_segments_train, labels_train = [], [], [], [], []
 test_data_ax, test_data_ay, test_data_az, len_segments_test, labels_test = [], [], [], [], []          
 
 ### Perform data augmentation in order to have the same number of examples from each behavioral group.
-for group in temp_groups:
+for group in augmented_groups:
     while len(group) < max_group_length:
         try:
             current_segment = copy.copy(random.choice(group))
             
-            csa_ax = tsaug.AddNoise(scale=0.025).augment(current_segment.ax)
-            csa_ay = tsaug.AddNoise(scale=0.025).augment(current_segment.ay)
-            csa_az = tsaug.AddNoise(scale=0.025).augment(current_segment.az)
+            rand = random.uniform(0, 1)
+            if rand >= 0.5:
+                csa_ax = tsaug.AddNoise(scale=0.02).augment(current_segment.ax)
+                csa_ay = tsaug.AddNoise(scale=0.02).augment(current_segment.ay)
+                csa_az = tsaug.AddNoise(scale=0.02).augment(current_segment.az)
+            else:
+                csa_ax = tsaug.Drift(max_drift=0.2, n_drift_points=5).augment(current_segment.ax)
+                csa_ay = tsaug.Drift(max_drift=0.2, n_drift_points=5).augment(current_segment.ay)
+                csa_az = tsaug.Drift(max_drift=0.2, n_drift_points=5).augment(current_segment.az)
                 
             current_segment.ax, current_segment.ay, current_segment.az = csa_ax, csa_ay, csa_az
+            current_segment.id = None
             group.append(current_segment)
         except:
             continue
 print("Data augmentation performed")
+
+temp_groups = copy.copy(augmented_groups)
 
 for i in range(0, num_segments_train_pergroup):
     for group in temp_groups:
@@ -84,6 +131,7 @@ for i in range(0, num_segments_test_pergroup):
     for group in temp_groups:
         current_segment = random.choice(group)
         segments_test.append(current_segment)
+        group.remove(current_segment)
 random.shuffle(segments_test)
 
 for current_segment in segments_test:
@@ -100,6 +148,16 @@ labels_train, labels_test = np.array(labels_train), np.array(labels_test)
 train_data = np.array([train_data_ax, train_data_ay, train_data_az])
 test_data = np.array([test_data_ax, test_data_ay, test_data_az])  
 print("Data is ready for training")
+
+del train_data_ax
+del train_data_ay
+del train_data_az
+del test_data_ax
+del test_data_ay
+del test_data_az
+del groups
+del augmented_groups
+del temp_groups
 
 ### Train and test Reservoir Computer Network
 Network = Network.Network()
@@ -123,7 +181,7 @@ Network.test_network(test_data, num_segments_test, len_segments_test, num_nodes,
 
 if classifier == 'log':
     print(f'Performance using {classifier} : {Network.regressor.score(Network.mean_test_matrix.T,labels_test.T)}')
-    prediction = Network.regressor.predict(Network.mean_test_matrix.T)
+    prediction_test = Network.regressor.predict(Network.mean_test_matrix.T)
 
 finish_time = time.time()
 total_time = finish_time - start_time
@@ -144,7 +202,7 @@ Network.test_network(train_data, num_segments_train, len_segments_train, num_nod
 
 if classifier == 'log':
     print(f'Performance using {classifier} over train data: {Network.regressor.score(Network.mean_test_matrix.T,labels_train.T)}')
-    prediction = Network.regressor.predict(Network.mean_test_matrix.T)
+    prediction_train = Network.regressor.predict(Network.mean_test_matrix.T)
 
 ### Plot confusion matrix
 print("Plotting confusion matrix...")
@@ -153,3 +211,9 @@ disp = plot_confusion_matrix(Network.regressor, Network.mean_test_matrix.T, labe
 disp.ax_.set_title("Confusion matrix of train data")
 plt.show()
 
+
+del Network
+
+
+pipeline_output = [segments_train, segments_test, labels_train, labels_test, prediction_train, prediction_test]
+np.save(os.path.join(output_path, 'pipeline_output.npy'), pipeline_output)
